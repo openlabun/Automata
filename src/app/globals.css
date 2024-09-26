@@ -18,7 +18,7 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: #0a0a0a;
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -40,3 +40,55 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Para navegadores WebKit (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 12px; /* Ancho de la barra de scroll */
+  background-color: #1A1A1A; /* Fondo del scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #555555; /* Color del thumb */
+  border-radius: 6px; /* Bordes redondeados */
+  border: 3px solid #1A1A1A; /* Espacio entre el thumb y la barra */
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.5); /* Sombra más pronunciada */
+  transition: background-color 0.3s, transform 0.2s; /* Transición suave */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #525252; /* Color al hacer hover */
+  transform: scale(1.1); /* Efecto de aumento al hacer hover */
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #3e3e3e; /* Color al hacer clic */
+}
+
+* {
+  scrollbar-width: thin; /* Hacer el scrollbar más delgado */
+  scrollbar-color: #555555 #1A1A1A; /* Color del thumb y del fondo */
+}
+
+/* Scroll bar stylings */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--lightestgrey); 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+  border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+

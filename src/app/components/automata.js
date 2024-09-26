@@ -1,11 +1,53 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import dagre from 'cytoscape-dagre';
+import styles from "./component.module.css";
+import styles2 from "/src/app/page.module.css";
 
 cytoscape.use(dagre);
 
-const Automata = ({ nfaTable }) => {
+const Automata = ({ nfaTable, regex }) => {
+
   const cyContainer = useRef(null);
+  const [stringToEvaluate, setStringToEvaluate] = useState(""); // For evaluating input strings
+  const [accepted, setAccepted] = useState(false);
+
+  const handleStringInputChange = (event) => {
+    setStringToEvaluate(event.target.value); // Update the string to evaluate
+  };
+
+  const handleSubmit = async (event) => {
+    if (!regex) {
+      return;
+    }
+
+    event.preventDefault();
+    // Use regex passed as a prop here
+    try {
+      const response = await fetch("/api/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          regex: regex, // Pass the regex value
+          string: stringToEvaluate, // Pass the string to evaluate
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log(data);
+
+      if (response.ok) {
+        setAccepted(data.status);
+      } else {
+        console.error(data.status);
+      }
+    } catch (error) {
+      console.error("Error processing the regular expression.", error);
+    }
+  };
 
   useEffect(() => {
     if (!nfaTable) return; // Return if there's no NFA table data
@@ -132,19 +174,52 @@ const Automata = ({ nfaTable }) => {
       cy.fit(); // Adjust the graph to fit the viewport
     });
     
-
     // Clean up on unmount
     return () => cy.destroy();
   }, [nfaTable]); // Re-run the effect if nfaTable changes
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div className={styles.automatacontainer}>
+
+      <div className={styles.infoContainer}>
+        <div className={styles2.inputContainer}>
+          <input
+            type="text"
+            className={styles.input}
+            id="regex"
+            name="regex"
+            placeholder="Ingrese cadena a evaluar..."
+            autoComplete="off"
+            onChange={handleStringInputChange}
+          />
+          <input
+            className={styles.buttonsubmit}
+            value="Evaluar"
+            type="submit"
+            onClick={handleSubmit}
+          />
+        </div>
+
+        <div className={styles.acceptance}>
+          <div className={styles.option}>
+            <span className={styles.indicator}></span>
+            <span className={styles.text} id="accepted">Aceptado</span>
+          </div>
+          <div className={styles.option}>
+            <span className={styles.indicator}></span>
+            <span className={styles.text} id="rejected">Rechazado</span>
+          </div>
+        </div>
+      </div>
+      
       <div
         ref={cyContainer}
-        style={{ width: "100%", height: "100%", border: "2px solid lightgray" }}
+        style={{ width: "100%", height: "100%"}}
       ></div>
     </div>
   );
 };
 
 export default Automata;
+
+

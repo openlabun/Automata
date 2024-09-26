@@ -1,0 +1,181 @@
+/* Transition Table*/
+.transitionsTable {
+    justify-content: center;
+    padding: 20px;
+    max-width: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.transitionsTable h2 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.tableContainer {
+    max-height: 50vh; /* Ajusta el 50% de la altura de la ventana del navegador */
+    max-width: 50vh;
+    overflow-y: auto; /* Permite el desplazamiento vertical */
+    border: 1px solid #555; /* Opcional: agrega un borde al contenedor */
+    border-radius: 8px; /* Opcional: redondea los bordes */
+    position: relative;
+    align-items: center;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    position: relative; 
+}
+
+.table th, .table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #555;
+    color: #ffffff;
+}
+
+.table th {
+    background-color: #333;
+    color: #ffffff;
+    font-weight: bold;
+    position: sticky; /* Hace que la cabecera sea "pegajosa" */
+    top: 0; /* Fija la cabecera en la parte superior del contenedor */
+    z-index: 1; /* Asegura que la cabecera esté por encima del contenido */
+}
+
+.table tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.table tr:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table tr:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.automatacontainer{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.inputContainer, .acceptance {
+    flex: 1; /* Ambos divs ocuparán el mismo espacio */
+}
+
+.infoContainer {
+    margin: 20px;
+    display: flex;
+    justify-content: space-between; /* Distribuye los elementos con espacio entre ellos */
+    align-items: center;
+    gap: 20px; /* Espacio entre los inputs */
+}
+
+.acceptance {
+    display: flex;
+    justify-content: space-around; /* Coloca las opciones lado a lado */
+    align-items: center;
+    gap: 20px; /* Espacio entre las opciones */
+    padding: 10.5px 15px;
+    border-radius: 4px;
+    border: 1px solid #444; /* Bordes suaves en un gris oscuro */
+
+    background-color: rgba(255, 255, 255, 0.1);
+}
+  
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espacio entre el círculo y el texto */
+}
+
+.indicator {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-color: grey; /* Color inicial del círculo */
+}
+
+.text {
+  color: grey; /* Color inicial del texto */
+  font-weight: bold;
+}
+
+.accepted .indicator {
+  background-color: green;
+}
+
+.rejected .indicator {
+  background-color: red;
+}
+
+.accepted .text {
+  color: green;
+}
+
+.rejected .text {
+  color: red;
+}
+
+.input {
+  flex: 1; /* Hace que el input ocupe todo el espacio disponible */
+  padding: 12px 15px;
+  border-radius: 4px 0 0 4px ;
+  border: 1px solid #444; 
+  background-color: #222;
+  color: #fff; 
+  outline: none; 
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input::placeholder {
+  color: #aaa; /* Color del placeholder en gris claro */
+}
+
+.input:focus {
+  border: 1px solid #4CAF50; 
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); 
+}
+
+/* Estilo del botón submit */
+.buttonsubmit {
+  padding: 12px 20px;
+  background-color: #4CAF50; /* Fondo verde */
+  color: white; /* Texto en blanco */
+  border: 1px solid #217023; 
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Efecto hover en el botón */
+.buttonsubmit:hover {
+  background-color: #45a049; /* Color verde más oscuro al hacer hover */
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3); /* Sombra al hacer hover */
+}
+
+
+/* Alphabet*/
+.Alphabet {
+    color: white; /* Texto blanco para resaltar en fondo negro */
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center; /* Centrar el título */
+}
+
+

@@ -3,22 +3,38 @@
 import { useState } from "react";
 import styles from "./page.module.css";
 import Automata from "./components/automata";
+import TransitionTable from "./components/transitionTable";
+import Alphabet from "./components/alphabet";
 
 export default function Home() {
   const [regex, setRegex] = useState("");
-  const [stringToEvaluate, setStringToEvaluate] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [error, setError] = useState("");
   const [postfix, setPostfix] = useState("");
   const [nfaTable, setNfaTable] = useState(null);
   const [status, setStatus] = useState("");
+  const methodLabels = {
+    thompson: 'Método de Thompson',
+    subconjuntos: 'Método de Subconjuntos',
+    estadosSignificativos: 'Método de Estados Significativos',
+  };
+  
+  const [selectedMethod, setSelectedMethod] = useState('thompson');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  const selectedMethodLabel = methodLabels[selectedMethod];
+  
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleSelectMethod = (method) => {
+    setSelectedMethod(method);
+    setIsDropdownOpen(false); // Cerrar el menú después de seleccionar
+  };
 
   const handleInputChange = (event) => {
     setRegex(event.target.value);
-  };
-
-  const handleStringChange = (event) => {
-    setStringToEvaluate(event.target.value);
   };
 
   const handleSubmit = async (event) => {
@@ -84,7 +100,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           regex: regex,
-          string: stringToEvaluate,
+          string: 'a',
         }),
       });
   
@@ -115,22 +131,41 @@ export default function Home() {
     <div className={styles.page}>
       
       <header className={styles.header}>
-        <h1>Automata Visualizer</h1>
+        <h1 className={styles.title}>Automata Visualizer</h1>
+        <nav className={styles.navbar}>
+          <div className={styles.dropdown}>
+            <button className={styles.dropbtn} onClick={toggleDropdown}>
+              {selectedMethodLabel} &#x25BC;
+            </button>
+            {isDropdownOpen && (
+              <div className={styles.dropdownContent}>
+                {Object.keys(methodLabels)
+                  .filter((method) => method !== selectedMethod)
+                  .map((method) => (
+                    <button
+                      key={method}
+                      className={styles.menuItem}
+                      onClick={() => handleSelectMethod(method)}
+                    >
+                      {methodLabels[method]}
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        </nav>
       </header>
-      
+
       <div className={styles.container}>
         <div className={styles.data}>
           <form onSubmit={handleSubmit}>
             <div className={styles.inputContainer}>
-              <label className={styles.label} htmlFor="regex">
-                Ingrese la expresión regular
-              </label>
               <input
                 type="text"
                 className={styles.input}
                 id="regex"
                 name="regex"
-                placeholder="Expresión regular"
+                placeholder="Ingrese Expresion Regular..."
                 autoComplete="off"
                 value={regex}
                 onChange={handleInputChange}
@@ -140,13 +175,16 @@ export default function Home() {
                 value="Comenzar"
                 type="submit"
               />
-              {error && <div className={styles.error}>{error}</div>}
             </div>
+            {error && <div className={styles.error}>{error}</div>}
           </form>
+
+          <div className={styles.information}>
+            {showTable && <div><Alphabet/></div>}
+            {showTable && <div><TransitionTable nfaTable={nfaTable}/></div>}
+          </div>
         </div>
-  
-          <Automata />
-        
+          <Automata nfaTable={nfaTable} regex={regex}/>
       </div>
       
       <footer className={styles.footer}>
