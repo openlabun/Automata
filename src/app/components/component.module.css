@@ -15,19 +15,23 @@
 }
 
 .tableContainer {
-    max-height: 50vh; /* Ajusta el 50% de la altura de la ventana del navegador */
-    max-width: 50vh;
-    overflow-y: auto; /* Permite el desplazamiento vertical */
-    border: 1px solid #555; /* Opcional: agrega un borde al contenedor */
-    border-radius: 8px; /* Opcional: redondea los bordes */
-    position: relative;
-    align-items: center;
+  display: flex; 
+  justify-content: center; 
+  max-height: 50vh; 
+  max-width: 61vh; 
+  overflow-y: auto; 
+  overflow-x: auto;
+  border: 1px solid #555; 
+  border-radius: 8px; 
+  position: relative;
+  align-items: center;
 }
 
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    position: relative; 
+  width: auto; 
+  min-width: 100%; 
+  border-collapse: collapse;
+  position: relative; 
 }
 
 .table th, .table td {
@@ -41,9 +45,9 @@
     background-color: #333;
     color: #ffffff;
     font-weight: bold;
-    position: sticky; /* Hace que la cabecera sea "pegajosa" */
-    top: 0; /* Fija la cabecera en la parte superior del contenedor */
-    z-index: 1; /* Asegura que la cabecera esté por encima del contenido */
+    position: sticky; 
+    top: 0; 
+    z-index: 1; 
 }
 
 .table tr:nth-child(even) {
@@ -68,65 +72,47 @@
 }
 
 .inputContainer, .acceptance {
-    flex: 1; /* Ambos divs ocuparán el mismo espacio */
+    flex: 1; 
 }
 
 .infoContainer {
     margin: 20px;
     display: flex;
-    justify-content: space-between; /* Distribuye los elementos con espacio entre ellos */
+    justify-content: space-between; 
     align-items: center;
-    gap: 20px; /* Espacio entre los inputs */
+    gap: 20px; 
 }
 
 .acceptance {
     display: flex;
-    justify-content: space-around; /* Coloca las opciones lado a lado */
+    justify-content: space-around; 
     align-items: center;
-    gap: 20px; /* Espacio entre las opciones */
+    gap: 20px; 
     padding: 10.5px 15px;
     border-radius: 4px;
-    border: 1px solid #444; /* Bordes suaves en un gris oscuro */
-
+    border: 1px solid #444; 
     background-color: rgba(255, 255, 255, 0.1);
 }
-  
+
 .option {
   display: flex;
   align-items: center;
-  gap: 10px; /* Espacio entre el círculo y el texto */
+  gap: 10px; 
 }
 
 .indicator {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background-color: grey; /* Color inicial del círculo */
+  background-color: grey; 
 }
 
 .text {
-  color: grey; /* Color inicial del texto */
   font-weight: bold;
 }
 
-.accepted .indicator {
-  background-color: green;
-}
-
-.rejected .indicator {
-  background-color: red;
-}
-
-.accepted .text {
-  color: green;
-}
-
-.rejected .text {
-  color: red;
-}
-
 .input {
-  flex: 1; /* Hace que el input ocupe todo el espacio disponible */
+  flex: 1;
   padding: 12px 15px;
   border-radius: 4px 0 0 4px ;
   border: 1px solid #444; 
@@ -137,20 +123,20 @@
 }
 
 .input::placeholder {
-  color: #aaa; /* Color del placeholder en gris claro */
+  color: #aaa; 
 }
 
 .input:focus {
-  border: 1px solid #4CAF50; 
-  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); 
+  border: 1px solid  #4A90E2; 
+  box-shadow: 0 0 5px  #123761(76, 175, 80, 0.5); 
 }
 
 /* Estilo del botón submit */
 .buttonsubmit {
   padding: 12px 20px;
-  background-color: #4CAF50; /* Fondo verde */
-  color: white; /* Texto en blanco */
-  border: 1px solid #217023; 
+  background-color:  #4A90E2; 
+  color: white; 
+  border: 1px solid  #4A90E2; 
   border-radius: 0 4px 4px 0;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -158,24 +144,23 @@
 
 /* Efecto hover en el botón */
 .buttonsubmit:hover {
-  background-color: #45a049; /* Color verde más oscuro al hacer hover */
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3); /* Sombra al hacer hover */
+  background-color:  #205fa7; 
+  box-shadow: 0 4px 8px  #235792(76, 175, 80, 0.3); 
 }
 
 
 /* Alphabet*/
 .Alphabet {
-    color: white; /* Texto blanco para resaltar en fondo negro */
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    flex-grow: 1; 
+    text-align: center; 
+    font-size: larger;
 }
 
 .title {
     font-size: 24px;
     margin-bottom: 20px;
-    text-align: center; /* Centrar el título */
+    text-align: center;
 }
 
 

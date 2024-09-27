@@ -8,8 +8,8 @@
 
 .header {
   display: flex;
-  justify-content: space-between; /* Espaciado entre los elementos */
-  align-items: center; /* Alinear verticalmente al centro */
+  justify-content: space-between; 
+  align-items: center; 
   background-color: #1b1b1b;
   padding: 10px;
   color: #fff;
@@ -18,21 +18,22 @@
 }
 
 .footer {
-  background-color: #333;
-  color: white;
+  background-color: #1b1b1b;
+  color: rgb(138, 138, 138);
   padding: 10px;
   text-align: center;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   z-index: 10;
+  border-top: 3px solid #333;
+  box-shadow: 10px 4px 10px rgba(34, 34, 34, 0.3);
 }
 
 .title {
-  margin: 0; /* Eliminar márgenes para que esté al borde */
-  padding-left: 20px; /* Espacio a la izquierda */
+  margin: 0;
+  padding-left: 20px;
 }
 
 .container {
@@ -42,7 +43,6 @@
   box-sizing: border-box;
 }
 
-/* Data section with 40% width */
 .data {
   flex-basis: 50%; 
   padding: 20px;
@@ -53,20 +53,13 @@
   border-right: 2px solid #333;
 }
 
-/* Automata section with 60% width */
-.automatacontainer {
-  flex-basis: 60%; 
-  background-color: #111;
-  overflow: hidden; 
-}
-
 .inputContainer {
   display: flex;
-  align-items: center; /* Alinea verticalmente el botón con el input */
+  align-items: center;
   width: 100%;
 }
 
-/* Input fields and submit button styling */
+
 .input{
   width: 100%;
   padding: 10px;
@@ -112,7 +105,6 @@
   animation: fadeIn 0.7s; 
 }
 
-/* Media query for smaller screens */
 @media (max-width: 768px) {
   .container {
     flex-direction: column; 
@@ -128,7 +120,6 @@
   }
 }
 
-/* Animación de desvanecimiento */
 @keyframes fadeIn {
   from {
       opacity: 0;
@@ -140,15 +131,15 @@
 
 .navbar {
   position: relative;
-  flex-grow: 1; 
-  text-align: center; 
-}
-.dropdown {
-  position: relative;
-  display: inline-block;
 }
 
-.dropbtn {
+.methodButtons {
+  display: flex;
+  justify-content: center; 
+  gap: 10px; 
+}
+
+.menuItem {
   background-color: #2a2a2a;
   color: #fff;
   padding: 10px 20px;
@@ -159,60 +150,15 @@
   transition: background-color 0.3s ease;
 }
 
-.dropbtn:hover {
-  background-color: #4A90E2; /* Resaltar al pasar el cursor */
-}
-
-.dropdownContent {
-  display: block;
-  position: absolute;
-  background-color: #1b1b1b;
-  min-width: 200px;
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: 4px;
-  border: 1px solid #333;
-}
-
-.menuItem {
-  color: white;
-  padding: 12px 16px;
-  text-align: left;
-  border: none;
-  width: 100%;
-  background-color: transparent;
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  border-bottom: 1px solid #333;
-}
-
 .menuItem:hover {
-  background-color: #4A90E2; /* Resaltar al pasar el cursor */
+  background-color: #9b3b04; 
+  box-shadow: 0px 0px 10px #be4f0e;
 }
 
-.menuItem:last-child {
-  border-bottom: none;
-}
-
-.dropdownContent button:focus {
-  outline: none;
-}
-
-.dropdownContent {
-  display: none;
-}
-
-.dropdown:hover .dropdownContent {
-  display: block;
-}
-
-.dropdown:hover .dropbtn {
-  background-color: #4A90E2;
-}
-
-.dropdownContent {
-  display: none;
+.active {
+  background-color: #be4f0e; 
+  box-shadow: 0px 0px 10px #c45819;
+  border:2 px solid #be4f0e;
 }
 
 @media (max-width: 768px) {
@@ -229,8 +175,8 @@
 
 .information {
   display: flex;
-  flex-direction: column; /* Alinea los divs en columna */
-  gap: 20px; /* Espacio entre cada div */
+  flex-direction: column; 
+  gap: 20px; 
   max-height: 70vh;
-  overflow-y: auto; /* Permite el desplazamiento vertical */
+  overflow-y: auto; 
 }

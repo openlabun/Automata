@@ -20,21 +20,15 @@ export default function Home() {
   };
   
   const [selectedMethod, setSelectedMethod] = useState('thompson');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const selectedMethodLabel = methodLabels[selectedMethod];
-  
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
   const handleSelectMethod = (method) => {
     setSelectedMethod(method);
-    setIsDropdownOpen(false); // Cerrar el menú después de seleccionar
   };
 
   const handleInputChange = (event) => {
     setRegex(event.target.value);
+    setNfaTable(null);
+    setShowTable(false);
   };
 
   const handleSubmit = async (event) => {
@@ -46,12 +40,14 @@ export default function Home() {
     if (regex.trim() === "") {
       setError("La expresión regular no puede estar vacía.");
       setShowTable(false);
+      setNfaTable(null);
       return;
     }
   
     if (!regexPattern.test(regex)) {
       setError("La expresión regular solo puede contener letras, números, y los símbolos: (, ), |, *, + y ?");
       setShowTable(false);
+      setNfaTable(null);
       return;
     }
   
@@ -71,6 +67,7 @@ export default function Home() {
     if (!isBalanced(regex)) {
       setError("Los paréntesis no están balanceados.");
       setShowTable(false);
+      setNfaTable(null);
       return;
     }
   
@@ -79,6 +76,7 @@ export default function Home() {
     if (invalidOr.test(regex)) {
       setError("El operador | requiere dos operandos.");
       setShowTable(false);
+      setNfaTable(null);
       return;
     }
 
@@ -88,6 +86,7 @@ export default function Home() {
     } catch (e) {
       setError("La expresión regular ingresada no es válida.");
       setShowTable(false);
+      setNfaTable(null);
       return;
     }
 
@@ -105,8 +104,6 @@ export default function Home() {
       });
   
       const data = await response.json();
-
-      console.log(data);
   
       if (response.ok) {
         setPostfix(data.postfix);
@@ -133,25 +130,16 @@ export default function Home() {
       <header className={styles.header}>
         <h1 className={styles.title}>Automata Visualizer</h1>
         <nav className={styles.navbar}>
-          <div className={styles.dropdown}>
-            <button className={styles.dropbtn} onClick={toggleDropdown}>
-              {selectedMethodLabel} &#x25BC;
-            </button>
-            {isDropdownOpen && (
-              <div className={styles.dropdownContent}>
-                {Object.keys(methodLabels)
-                  .filter((method) => method !== selectedMethod)
-                  .map((method) => (
-                    <button
-                      key={method}
-                      className={styles.menuItem}
-                      onClick={() => handleSelectMethod(method)}
-                    >
-                      {methodLabels[method]}
-                    </button>
-                  ))}
-              </div>
-            )}
+          <div className={styles.methodButtons}>
+            {Object.keys(methodLabels).map((method) => (
+              <button
+                key={method}
+                className={`${styles.menuItem} ${selectedMethod === method ? styles.active : ''}`}
+                onClick={() => handleSelectMethod(method)}
+              >
+                {methodLabels[method]}
+              </button>
+            ))}
           </div>
         </nav>
       </header>
@@ -180,7 +168,7 @@ export default function Home() {
           </form>
 
           <div className={styles.information}>
-            {showTable && <div><Alphabet/></div>}
+            {showTable && <div><Alphabet nfaTable={nfaTable}/></div>}
             {showTable && <div><TransitionTable nfaTable={nfaTable}/></div>}
           </div>
         </div>
@@ -188,7 +176,7 @@ export default function Home() {
       </div>
       
       <footer className={styles.footer}>
-        <p>&copy; 2024 Automata Visualizer. All rights reserved.</p>
+        <p>&copy; 2024 Automata Visualizer. Desarrollado por: Ana ardila, Luis Parra, Edgar Torres & Juan Vargas.</p>
       </footer>
   
     </div>
