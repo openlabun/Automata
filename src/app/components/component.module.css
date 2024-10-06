@@ -1,5 +1,5 @@
 /* Transition Table*/
-.transitionsTable {
+.transitionsTable, .equivalentStatesTable {
     justify-content: center;
     padding: 20px;
     max-width: 100%;
@@ -7,6 +7,11 @@
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+.equivalentStatesTable {
+    margin-top: 20px;
+}
+
 
 .transitionsTable h2 {
     color: #ffffff;
@@ -161,6 +166,34 @@
     font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
+}
+
+.disabled {
+  background-color: rgba(255, 255, 255, 0.041); 
+  color: rgba(255, 255, 255, 0.5); 
+  pointer-events: none; 
+  border: 1px solid rgba(255, 255, 255, 0.3); 
+}
+
+.cancelButton {
+  position: absolute;
+  bottom: 5vh; /* Adjust based on the viewport height */
+  left: 1vw; /* Adjust based on the viewport width */
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem; /* Use rem units for scalable padding */
+  border-radius: 0.5rem; /* Rem units for border radius */
+  cursor: pointer;
+  z-index: 10;
+  font-size: 1rem; /* Responsive text size */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+}
+
+.cancelButton:hover {
+  background-color: darkred;
+  transform: scale(1.05); /* Slight scaling effect on hover */
 }
 
 

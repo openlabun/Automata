@@ -1,29 +1,14 @@
 import { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
-const Alphabet = ({ nfaTable }) => {
+const Alphabet = ({ symbols }) => {
     const [alphabet, setAlphabet] = useState([]);
 
     useEffect(() => {
-        if (nfaTable) {
-            const parsedSymbols = new Set();
-
-            // Loop through each state and its transitions
-            for (const fromState in nfaTable) {
-                const transitions = nfaTable[fromState];
-
-                // Loop through each symbol
-                for (const symbol in transitions) {
-                    parsedSymbols.add(symbol); // Collect the symbols
-                }
-            }
-
-            // Convert Set to Array and sort them
-            const sortedSymbols = Array.from(parsedSymbols).sort();
-            console.log('sortedSymbols', sortedSymbols);
-            setAlphabet(sortedSymbols);
+        if (symbols) {
+            setAlphabet(symbols);
         }
-    }, [nfaTable]);
+    }, [symbols]);
 
     return (
         <div className={styles.transitionsTable}>

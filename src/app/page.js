@@ -1,26 +1,174 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import styles from "./page.module.css";
 import Automata from "./components/automata";
 import TransitionTable from "./components/transitionTable";
 import Alphabet from "./components/alphabet";
+import Subset from "./components/subset";
 
 export default function Home() {
   const [regex, setRegex] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [error, setError] = useState("");
   const [postfix, setPostfix] = useState("");
+  const [symbols, setSymbols] = useState([]);
   const [nfaTable, setNfaTable] = useState(null);
-  const [status, setStatus] = useState("");
+  const [tranD, setTranD] = useState(null);
+  const [significantStatesVariable, setSignificantStatesVariable] = useState(null);
+  const [states, setStates] = useState(null);
+
   const methodLabels = {
     thompson: 'Método de Thompson',
     subconjuntos: 'Método de Subconjuntos',
     estadosSignificativos: 'Método de Estados Significativos',
   };
-  
   const [selectedMethod, setSelectedMethod] = useState('thompson');
+  const [lastRegex, setLastRegex] = useState("");
+  const [isReady, setIsReady] = useState(false); 
+
+  useEffect(() => {
+    if (postfix && symbols) {
+      setShowTable(true);
+    }
+  }, [postfix, symbols]); 
   
+  useEffect(() => {
+    if (isReady) {
+      handleMethodSwitch();
+    }
+  }, [selectedMethod, isReady]); 
+  
+
+  const thompson = async () => {
+    if(!regex){
+      return;
+    }
+
+    try {
+      const responseValidate = await fetch('/api/process/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          regex,  // Send the regex key to match the API
+        }),
+      });
+
+      const dataValidate = await responseValidate.json();
+
+      if (responseValidate.ok) {
+        setPostfix(dataValidate.postfix);
+        setSymbols(dataValidate.symbols);
+        setShowTable(true);
+
+        // Thompson API call
+        const responseThompson = await fetch('/api/process/thompson', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            postfix: dataValidate.postfix,
+            symbols: dataValidate.symbols,
+          }),
+        });
+
+        const dataThompson = await responseThompson.json();
+
+        if (responseThompson.ok) {
+          setPostfix(dataValidate.postfix);
+          setSymbols(dataValidate.symbols);
+          setIsReady(true); 
+          if(selectedMethod === "thompson"){
+            console.log('Thompson:', dataThompson.transition_table);
+            setNfaTable(dataThompson.transition_table);
+          }
+        } else {
+          setError(`Error: ${dataThompson.error}`);
+        }
+      } else {
+        setError(`Error: ${dataValidate.error}`);
+      }
+    } catch (error) {
+      setError('Failed to process the regular expression.');
+    }
+  };
+
+  const subset = async () => {
+    if (!postfix || !symbols) return; // Verifica que se hayan establecido los datos necesarios
+  
+    try {
+      const responseValidate = await fetch('/api/process/subset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postfix,
+          symbols,
+        }),
+      });
+  
+      const dataValidate = await responseValidate.json();
+  
+      if (responseValidate.ok) {
+        setTranD(dataValidate.TranD);
+        setSignificantStatesVariable(dataValidate.Significant_states);
+        setStates(dataValidate.States);
+        setNfaTable(dataValidate.TranD);
+
+        console.log('ENNVIANDO Subset:', dataValidate.TranD);
+        console.log('postfix:', postfix);
+      } else {
+        setError(`Error: ${dataValidate.error}`);
+      }
+    } catch (error) {
+      setError('Failed to process the regular expression.');
+    }
+  };
+
+  const significantStates = async () => {
+    if (!postfix || !symbols) return; // Verifica que se hayan establecido los datos necesarios
+  
+    try {
+      const responseValidate = await fetch('/api/process/optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postfix,
+          symbols,
+        }),
+      });
+  
+      const dataValidate = await responseValidate.json();
+  
+      if (responseValidate.ok) {
+        setNfaTable(dataValidate.TranD);
+      } else {
+        setError(`Error: ${dataValidate.error}`);
+      }
+    } catch (error) {
+      setError('Failed to process the regular expression.');
+    }
+  };
+
+  const handleMethodSwitch = async () => {
+    console.log(`Switched to: ${selectedMethod}`);
+  
+    await thompson();
+  
+    if (!isReady) return;
+  
+    if (selectedMethod === "subconjuntos") {
+      await subset();
+    } else if (selectedMethod === "estadosSignificativos") {
+      await significantStates();
+    }
+  };
+
   const handleSelectMethod = (method) => {
     setSelectedMethod(method);
   };
@@ -29,49 +177,45 @@ export default function Home() {
     setRegex(event.target.value);
     setNfaTable(null);
     setShowTable(false);
+    setLastRegex("");
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
-    // Validación de la expresión regular
-    const regexPattern = /^[A-Za-z0-9|*+?()]*$/; // Permite letras, números y |, *, +, ?
-  
+
+    if (regex.trim() === lastRegex) {
+      return;
+    }
+
+    setLastRegex(regex.trim());
+
     if (regex.trim() === "") {
       setError("La expresión regular no puede estar vacía.");
       setShowTable(false);
       setNfaTable(null);
       return;
     }
-  
-    if (!regexPattern.test(regex)) {
-      setError("La expresión regular solo puede contener letras, números, y los símbolos: (, ), |, *, + y ?");
-      setShowTable(false);
-      setNfaTable(null);
-      return;
-    }
-  
-    // Comprobar si los paréntesis están balanceados
+
+    // Check for balanced parentheses and invalid operators
     const isBalanced = (str) => {
       let stack = [];
       for (let char of str) {
         if (char === "(") stack.push(char);
         else if (char === ")") {
-          if (stack.length === 0) return false; // Paréntesis sin abrir
+          if (stack.length === 0) return false; 
           stack.pop();
         }
       }
-      return stack.length === 0; // Verificar si todos los paréntesis se cerraron
+      return stack.length === 0;
     };
-  
+
     if (!isBalanced(regex)) {
       setError("Los paréntesis no están balanceados.");
       setShowTable(false);
       setNfaTable(null);
       return;
     }
-  
-    // Comprobar que operadores como *, +, ?, | estén bien ubicados
+
     const invalidOr = /([|]{2,})|(^[|])|([|]$)|([*+?]{1,})[|]/;
     if (invalidOr.test(regex)) {
       setError("El operador | requiere dos operandos.");
@@ -80,9 +224,8 @@ export default function Home() {
       return;
     }
 
-    // Comprobar si la expresión regular es válida usando new RegExp()
     try {
-      new RegExp(regex); // Intentar compilar la expresión regular
+      new RegExp(regex);
     } catch (e) {
       setError("La expresión regular ingresada no es válida.");
       setShowTable(false);
@@ -90,43 +233,14 @@ export default function Home() {
       return;
     }
 
-    // Si todo está bien, no hay errores
-    try {
-      const response = await fetch('/api/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          regex: regex,
-          string: 'a',
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        setPostfix(data.postfix);
-        setNfaTable(data.nfa_table);
-        setStatus(data.status);
-        setShowTable(true);
-      } else {
-        setError(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      setError('Failed to process the regular expression.');
-    }
-  
-    // Si todo está bien, no hay errores
-    setError(""); // Limpiar mensaje de error
-    setShowTable(true); // Mostrar tabla de transiciones o siguiente paso
-  
-    // Aquí puedes manejar la lógica para calcular las transiciones
+    handleMethodSwitch();
+    
+    setError("");
+    setShowTable(true);
   };
 
   return (
     <div className={styles.page}>
-      
       <header className={styles.header}>
         <h1 className={styles.title}>Automata Visualizer</h1>
         <nav className={styles.navbar}>
@@ -168,17 +282,19 @@ export default function Home() {
           </form>
 
           <div className={styles.information}>
-            {showTable && <div><Alphabet nfaTable={nfaTable}/></div>}
-            {showTable && <div><TransitionTable nfaTable={nfaTable}/></div>}
+            {showTable && <div><Alphabet symbols={symbols} /></div>}
+            {showTable  && selectedMethod === "thompson" && <div><TransitionTable nfaTable={nfaTable} /></div>}
+            {showTable && selectedMethod === "subconjuntos" && (
+              <div><Subset TranD={tranD} States={states} /></div>
+            )}
           </div>
         </div>
-          <Automata nfaTable={nfaTable} regex={regex}/>
+        <Automata nfaTable={nfaTable} regex={regex} method={selectedMethod}/>
       </div>
-      
+
       <footer className={styles.footer}>
         <p>&copy; 2024 Automata Visualizer. Desarrollado por: Ana ardila, Luis Parra, Edgar Torres & Juan Vargas.</p>
       </footer>
-  
     </div>
   );
 }
