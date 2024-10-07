@@ -6,7 +6,8 @@ import styles2 from "/src/app/page.module.css";
 
 cytoscape.use(dagre);
 
-const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => {
+const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
+
 
   const cyContainer = useRef(null);
   const cyRef = useRef(null); 
@@ -17,6 +18,10 @@ const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => 
   const [accepted, setAccepted] = useState(null); // Accepted status of the string
   const [paths, setPaths] = useState([]);
   const [abortController, setAbortController] = useState(null); 
+
+  console.log('is animating', isAnimating);
+  console.log('is disabled', isDisabled);
+
 
   const handleStringInputChange = (event) => {
     setStringToEvaluate(event.target.value);
@@ -34,37 +39,65 @@ const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => 
     cyRef.current.elements().removeClass("highlighted"); 
   };
 
-  const handleSubmit = async (event) => {
-
-    event.preventDefault();
-
-    console.log('metodo', method);
-    console.log('regex', regex);
-
+  const evaluate = async () => {
     try {
-      const response = await fetch("/api/process/evaluate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          regex,
-          method,
-        }),
-      });
+        const response = await fetch("/api/process/evaluate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                inputString: stringToEvaluate,
+                method,
+            }),
+        });
 
-      const data = await response.json();
-      console.log('response data', data);
+        const data = await response.json();
+        console.log('data enviada', data); 
 
-      setAccepted(data.status === "Aceptada");
-      setPaths(JSON.parse(data.paths)); 
-      setTriggerAnimation(!triggerAnimation);
-      setIsAnimating(true);
-      setIsDisabled(true);
+        if (response.ok) {
+            return {
+                status: data.status.trim() === "Aceptada", 
+                paths: Array.isArray(data.paths) ? data.paths : JSON.parse(data.paths),
+            };
+        } else {
+            console.error("Error response:", data);
+            return {
+                status: false,
+                paths: [],     
+            };
+        }
+
     } catch (error) {
-      console.error("Error processing the regular expression.", error);
+        console.error("Error processing the regular expression.", error);
+        return {
+            status: false, 
+            paths: [],     
+        };
     }
-  };
+};
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+
+  console.log('metodo', method);
+  console.log('string', stringToEvaluate);
+
+  const { status, paths } = await evaluate();
+
+  console.log('status', status); 
+  console.log('paths', paths);   
+
+  setAccepted(status);
+  setPaths(paths);
+  setTriggerAnimation(prev => !prev); 
+  setIsAnimating(true);
+  setIsDisabled(true);
+  
+  console.log('Updated status', accepted); 
+  console.log('triggerAnimation', triggerAnimation); 
+};
+
 
   useEffect(() => {
 

@@ -345,7 +345,7 @@ export default function Home() {
           </div>
           
         </div>
-        <Automata nfaTable={nfaTable} regex={regex} method={selectedMethod} initial_state={initialStates} accept_states={acceptStates}/>
+        <Automata nfaTable={nfaTable} method={selectedMethod} initial_state={initialStates} accept_states={acceptStates}/>
       </div>
 
       <footer className={styles.footer}>
