@@ -5,18 +5,19 @@ import Automata from "./components/automata";
 import TransitionTable from "./components/transitionTable";
 import Alphabet from "./components/alphabet";
 import Subset from "./components/subset";
+import Optimize from "./components/optimize";
 
 export default function Home() {
   const [regex, setRegex] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [error, setError] = useState("");
-  const [postfix, setPostfix] = useState("");
   const [symbols, setSymbols] = useState([]);
   const [nfaTable, setNfaTable] = useState(null);
   const [tranD, setTranD] = useState(null);
   const [significantStatesVariable, setSignificantStatesVariable] = useState(null);
   const [states, setStates] = useState(null);
-
+  const [initialStates, setInitialStates] = useState(null);
+  const [acceptStates, setAcceptStates] = useState(null);
   const methodLabels = {
     thompson: 'Método de Thompson',
     subconjuntos: 'Método de Subconjuntos',
@@ -27,12 +28,6 @@ export default function Home() {
   const [isReady, setIsReady] = useState(false); 
 
   useEffect(() => {
-    if (postfix && symbols) {
-      setShowTable(true);
-    }
-  }, [postfix, symbols]); 
-  
-  useEffect(() => {
     if (isReady) {
       handleMethodSwitch();
     }
@@ -40,6 +35,13 @@ export default function Home() {
   
 
   const thompson = async () => {
+
+    let postfix = {};
+    let symbols = {};
+    let nfaTable = {};
+    let initial_state = null;
+    let accept_states = null;
+
     if(!regex){
       return;
     }
@@ -58,11 +60,10 @@ export default function Home() {
       const dataValidate = await responseValidate.json();
 
       if (responseValidate.ok) {
-        setPostfix(dataValidate.postfix);
-        setSymbols(dataValidate.symbols);
-        setShowTable(true);
 
-        // Thompson API call
+        postfix = dataValidate.postfix;
+        symbols = dataValidate.symbols;
+
         const responseThompson = await fetch('/api/process/thompson', {
           method: 'POST',
           headers: {
@@ -77,13 +78,16 @@ export default function Home() {
         const dataThompson = await responseThompson.json();
 
         if (responseThompson.ok) {
-          setPostfix(dataValidate.postfix);
-          setSymbols(dataValidate.symbols);
-          setIsReady(true); 
-          if(selectedMethod === "thompson"){
-            console.log('Thompson:', dataThompson.transition_table);
-            setNfaTable(dataThompson.transition_table);
-          }
+
+          setIsReady(true);
+          postfix = dataValidate.postfix;
+          symbols = dataValidate.symbols;
+          nfaTable = dataThompson.transition_table;
+          initial_state = dataThompson.initial_state;
+          accept_states = dataThompson.accept_states;
+
+          return { postfix, symbols, nfaTable, initial_state, accept_states};
+
         } else {
           setError(`Error: ${dataThompson.error}`);
         }
@@ -95,8 +99,8 @@ export default function Home() {
     }
   };
 
-  const subset = async () => {
-    if (!postfix || !symbols) return; // Verifica que se hayan establecido los datos necesarios
+  const subset = async (postfix, symbols) => {
+    if (!postfix || !symbols) return; 
   
     try {
       const responseValidate = await fetch('/api/process/subset', {
@@ -113,13 +117,12 @@ export default function Home() {
       const dataValidate = await responseValidate.json();
   
       if (responseValidate.ok) {
-        setTranD(dataValidate.TranD);
-        setSignificantStatesVariable(dataValidate.Significant_states);
-        setStates(dataValidate.States);
-        setNfaTable(dataValidate.TranD);
-
-        console.log('ENNVIANDO Subset:', dataValidate.TranD);
-        console.log('postfix:', postfix);
+        return {
+          tranD: dataValidate.TranD,
+          states: dataValidate.States,
+          initialStates: dataValidate.initial_state,
+          acceptStates: dataValidate.accept_states,
+        };
       } else {
         setError(`Error: ${dataValidate.error}`);
       }
@@ -127,9 +130,10 @@ export default function Home() {
       setError('Failed to process the regular expression.');
     }
   };
+  
+  const significantStates = async (postfix, symbols) => {
 
-  const significantStates = async () => {
-    if (!postfix || !symbols) return; // Verifica que se hayan establecido los datos necesarios
+    if (!postfix || !symbols) return; 
   
     try {
       const responseValidate = await fetch('/api/process/optimize', {
@@ -146,7 +150,15 @@ export default function Home() {
       const dataValidate = await responseValidate.json();
   
       if (responseValidate.ok) {
-        setNfaTable(dataValidate.TranD);
+
+        console.log('toda la data', dataValidate);
+
+        return {
+          tranD: dataValidate.TranD,
+          states: dataValidate.States,
+          initialStates: dataValidate.initial_state,
+          acceptStates: dataValidate.accept_states,
+        };
       } else {
         setError(`Error: ${dataValidate.error}`);
       }
@@ -158,15 +170,44 @@ export default function Home() {
   const handleMethodSwitch = async () => {
     console.log(`Switched to: ${selectedMethod}`);
   
-    await thompson();
-  
+    const { postfix, symbols, nfaTable, initial_state, accept_states } = await thompson();
+
     if (!isReady) return;
-  
-    if (selectedMethod === "subconjuntos") {
-      await subset();
+
+    setShowTable(true);
+    setSymbols(symbols);
+
+    if (selectedMethod === "thompson") {
+
+      setNfaTable(nfaTable);
+      setInitialStates(initial_state);
+      setAcceptStates(accept_states);
+
+    } else if(selectedMethod === "subconjuntos") {
+
+      const {tranD, states, initialStates, acceptStates} = await subset(postfix, symbols);
+      setNfaTable(tranD);
+      setTranD(tranD);
+      setStates(states);
+      setInitialStates(initialStates);
+      setAcceptStates(acceptStates);
+
     } else if (selectedMethod === "estadosSignificativos") {
-      await significantStates();
+
+      const {tranD, states, initialStates, acceptStates} = await significantStates(postfix, symbols);
+      setNfaTable(tranD);
+      setTranD(tranD);
+      setStates(states);
+      setInitialStates(initialStates);
+      setAcceptStates(acceptStates);
+
+      console.log(tranD);
+      console.log(states);
+      console.log(initialStates);
+      console.log(acceptStates);
+
     }
+
   };
 
   const handleSelectMethod = (method) => {
@@ -196,7 +237,6 @@ export default function Home() {
       return;
     }
 
-    // Check for balanced parentheses and invalid operators
     const isBalanced = (str) => {
       let stack = [];
       for (let char of str) {
@@ -216,12 +256,15 @@ export default function Home() {
       return;
     }
 
-    const invalidOr = /([|]{2,})|(^[|])|([|]$)|([*+?]{1,})[|]/;
-    if (invalidOr.test(regex)) {
-      setError("El operador | requiere dos operandos.");
-      setShowTable(false);
-      setNfaTable(null);
-      return;
+    const invalidOr = /.+\|.+/;
+
+    if (regex.includes('|')) { // Verifica si hay un operador |
+      if (!invalidOr.test(regex)) {
+        setError("El operador | requiere dos operandos.");
+        setShowTable(false);
+        setNfaTable(null);
+        return;
+      }
     }
 
     try {
@@ -285,11 +328,15 @@ export default function Home() {
             {showTable && <div><Alphabet symbols={symbols} /></div>}
             {showTable  && selectedMethod === "thompson" && <div><TransitionTable nfaTable={nfaTable} /></div>}
             {showTable && selectedMethod === "subconjuntos" && (
-              <div><Subset TranD={tranD} States={states} /></div>
+              <div><Subset TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} /></div>
+            )}
+            {showTable && selectedMethod === "estadosSignificativos" && (
+              <div><Optimize TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} /></div>
             )}
           </div>
+          
         </div>
-        <Automata nfaTable={nfaTable} regex={regex} method={selectedMethod}/>
+        <Automata nfaTable={nfaTable} regex={regex} method={selectedMethod} initial_state={initialStates} accept_states={acceptStates}/>
       </div>
 
       <footer className={styles.footer}>

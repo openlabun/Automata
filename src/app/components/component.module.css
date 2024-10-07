@@ -10,6 +10,7 @@
 
 .equivalentStatesTable {
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 
@@ -22,7 +23,7 @@
 .tableContainer {
   display: flex; 
   justify-content: center; 
-  max-height: 50vh; 
+  max-height: 60vh; 
   max-width: 61vh; 
   overflow-y: auto; 
   overflow-x: auto;
@@ -177,23 +178,24 @@
 
 .cancelButton {
   position: absolute;
-  bottom: 5vh; /* Adjust based on the viewport height */
-  left: 1vw; /* Adjust based on the viewport width */
+  bottom: 5vh; 
+  left: 1vw; 
   background-color: red;
   color: white;
   border: none;
-  padding: 1rem 1.5rem; /* Use rem units for scalable padding */
-  border-radius: 0.5rem; /* Rem units for border radius */
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem; 
   cursor: pointer;
   z-index: 10;
-  font-size: 1rem; /* Responsive text size */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+  font-size: 1rem; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+  transition: background-color 0.3s ease, transform 0.2s ease; 
 }
 
 .cancelButton:hover {
   background-color: darkred;
-  transform: scale(1.05); /* Slight scaling effect on hover */
+  transform: scale(1.05); 
 }
+
 
 

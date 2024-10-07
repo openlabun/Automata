@@ -2,7 +2,6 @@ export async function POST(req) {
     try {
         const { postfix, symbols } = await req.json();
 
-        // Validate input
         if (!postfix || !Array.isArray(symbols)) {
             return new Response(JSON.stringify({ error: 'Missing postfix expression or symbols' }), { status: 400 });
         }

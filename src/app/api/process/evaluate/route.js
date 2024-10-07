@@ -1,6 +1,6 @@
 export async function POST(req) {
     try {
-        const { string: inputString, method } = await req.json();
+        const {inputString, method } = await req.json();
 
         if (!inputString || !method) {
             return new Response(JSON.stringify({ error: 'Missing input string or method' }), { status: 400 });

@@ -6,7 +6,7 @@ import styles2 from "/src/app/page.module.css";
 
 cytoscape.use(dagre);
 
-const Automata = ({ nfaTable, regex, method }) => {
+const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => {
 
   const cyContainer = useRef(null);
   const cyRef = useRef(null); 
@@ -38,15 +38,18 @@ const Automata = ({ nfaTable, regex, method }) => {
 
     event.preventDefault();
 
+    console.log('metodo', method);
+    console.log('regex', regex);
+
     try {
-      const response = await fetch("/api/process", {
+      const response = await fetch("/api/process/evaluate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          regex: regex,
-          string: stringToEvaluate,
+          regex,
+          method,
         }),
       });
 
@@ -85,7 +88,6 @@ const Automata = ({ nfaTable, regex, method }) => {
 
     if(method === "thompson") {
 
-      // Convert nfaTable into nodes and edges for Cytoscape
       Object.keys(nfaTable).forEach((state, index) => {
         if (index === 0) {
           firstState = state;
@@ -96,17 +98,22 @@ const Automata = ({ nfaTable, regex, method }) => {
         }
 
         if (!visitedNodes.has(state)) {
-          elements.push({ data: { id: state } });
+          const classes = state === accept_states ? "final" : ""; 
+          elements.push({ data: { id: state, label: state }, classes });  
           visitedNodes.add(state);
-        }
+      }
 
         Object.entries(nfaTable[state]).forEach(([transition, targets]) => {
           targets.forEach((target) => {
             elements.push({
               data: { source: state, target: target.toString(), label: transition },
             });
+
             if (!visitedNodes.has(target)) {
-              elements.push({ data: { id: target.toString() } });
+
+              const classes = target === accept_states ? "final" : ""; // Clase para el estado final
+
+              elements.push({ data: { id: target.toString(), label: target.toString() }, classes });  
               visitedNodes.add(target);
             }
           });
@@ -114,39 +121,44 @@ const Automata = ({ nfaTable, regex, method }) => {
       });
     
     } else {
-        Object.keys(nfaTable).forEach((key, index) => {
-          // Extract source state and transition
-          const [sourceState, transition] = key.split('->-');
-          const targetState = nfaTable[key].replace('*', ''); // Remove '*'
+
+      nfaTable.forEach(transitionStr => {
+        // Extract the state, transition symbol, and target state
+        const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
+        
+        if (match) {
+          const state = match[1];      // The state (e.g., "A")
+          const transition = match[2];  // The transition symbol (e.g., "a")
+          const target = match[3];      // The target state (e.g., "B")
       
-          // Add source state to elements if not already added
-          const cleanSourceState = sourceState.trim();
-          if (!visitedNodes.has(cleanSourceState)) {
-              elements.push({ data: { id: cleanSourceState } });
-              visitedNodes.add(cleanSourceState);
+          if (firstState === null) {
+            firstState = state;
+            elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
+            elements.push({
+              data: { source: "start", target: state, label: "" },
+            });
           }
       
-          // Add the transition to the elements
+  
+          if (!visitedNodes.has(state)) {
+            const classes = accept_states.includes(state) ? "final" : "";  
+            elements.push({ data: { id: state, label: state }, classes }); 
+            visitedNodes.add(state);
+          }
+      
           elements.push({
-              data: { source: cleanSourceState, target: targetState, label: transition }
+            data: { source: state, target: target, label: transition },
           });
       
-          // Add target state if it’s not already visited
-          const cleanTargetState = targetState.trim();
-          if (!visitedNodes.has(cleanTargetState)) {
-              elements.push({ data: { id: cleanTargetState } });
-              visitedNodes.add(cleanTargetState);
+          if (!visitedNodes.has(target)) {
+            
+            const classes = accept_states.includes(target) ? "final" : "";  
+            elements.push({ data: { id: target, label: target }, classes });  
+            visitedNodes.add(target);
           }
-      
-          // Set the first state if it's the first iteration
-          if (index === 0) {
-              firstState = cleanSourceState;
-              elements.unshift({ data: { id: "start", label: "Start" }, classes: "start" });
-              elements.unshift({
-                  data: { source: "start", target: cleanSourceState, label: "" },
-              });
-          }
+        }
       });
+      
     }
 
     const cy = cytoscape({
@@ -200,12 +212,14 @@ const Automata = ({ nfaTable, regex, method }) => {
         {
           selector: ".final",
           style: {
-            "border-width": 5,
-            "border-color": "#fff",
+              "border-width": 5,             
+              "border-color": "#00ff00",    
+              "background-color": "transparent", 
+              "shape": "ellipse",             
           },
-        },
+      },
         {
-          selector: ".highlighted", // Style for highlighted nodes and edges
+          selector: ".highlighted", 
           style: {
             "background-color": "yellow",
             "line-color": "yellow",

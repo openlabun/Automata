@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
-const Subset = ({ TranD, States, InitialState, AcceptState }) => {
+const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
+    console.log("TranDdddd", TranD);
 
     if (!TranD || !States) {
         return <div>Datos no disponibles</div>;
     }
 
     const transitionsMatrix = {};
+    const statesInTransitions = new Set(); 
 
     TranD.forEach(transitionStr => {
         const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
         if (match) {
-            const fromState = match[1];    
-            const symbol = match[2];       
-            const toState = match[3];       
+            const fromState = match[1];
+            const symbol = match[2];
+            const toState = match[3];
+
+            // Add fromState and toState to the set
+            statesInTransitions.add(fromState);
+            statesInTransitions.add(toState);
 
             if (!transitionsMatrix[fromState]) {
                 transitionsMatrix[fromState] = {};
@@ -23,12 +29,14 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
         }
     });
 
+    // Get unique symbols from TranD
     const symbols = Array.from(new Set(TranD.map(transitionStr => {
         const match = transitionStr.match(/:\((\w+),/);
-        return match ? match[1] : null;  
-    }))).filter(Boolean); 
+        return match ? match[1] : null;
+    }))).filter(Boolean);
 
-    const allStates = Object.keys(States).map(state => state.replace(/\*|->/g, "")); 
+   
+    const allStates = Array.from(statesInTransitions);
 
     return (
         <>
@@ -47,10 +55,9 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                         </thead>
                         <tbody>
                             {allStates.map((fromState) => {
-
-                                //check if the InitialState and AcceptState are lists
+                                // Check if the InitialState and AcceptState are lists
                                 if (!Array.isArray(InitialState) || !Array.isArray(AcceptState)) {
-                                    return; // Exit if they are not arrays
+                                    return; 
                                 }
 
                                 const isInitialState = InitialState.includes(fromState);
@@ -65,7 +72,7 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                                             <td key={`${fromState}-${symbol}`}>
                                                 {transitionsMatrix[fromState]?.[symbol]
                                                     ? transitionsMatrix[fromState][symbol].replace(/\*|->/g, "")
-                                                    : "-"}
+                                                    : "-"}  {/* Show "-" if no transition */}
                                             </td>
                                         ))}
                                     </tr>
@@ -89,7 +96,7 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                         </thead>
                         <tbody>
                             {Object.entries(States).map(([state, equivalents]) => {
-                                const equivalentStates = equivalents.map(equivalent => 
+                                const equivalentStates = equivalents.map(equivalent =>
                                     equivalent.toString().replace(/\*|->/g, "")
                                 ).join(", ");
                                 return (
@@ -107,4 +114,4 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
     );
 };
 
-export default Subset;
+export default Optimize;
