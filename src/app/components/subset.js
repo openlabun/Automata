@@ -77,7 +77,7 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
             </div>
 
             {/* Tabla de Estados Equivalentes */}
-            <div className={styles.equivalentStatesTable}>
+            <div className={styles.statesTable}>
                 <h2>Estados Equivalentes</h2>
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>

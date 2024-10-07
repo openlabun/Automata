@@ -42,29 +42,31 @@ const TransitionTable = ({ nfaTable }) => {
     return (
         <div className={styles.transitionsTable}>
             <h2>Transiciones del Autómata</h2>
-            <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Estado</th>
-                            {symbols.map((symbol) => (
-                                <th key={symbol}>{symbol}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {states.map((fromState) => (
-                            <tr key={fromState}>
-                                <td>{fromState}</td>
+            <div className={styles.wrapper}>
+                <div className={styles.tableContainer}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
                                 {symbols.map((symbol) => (
-                                    <td key={`${fromState}-${symbol}`}>
-                                        {transitionsMatrix[fromState]?.[symbol] || "-"}
-                                    </td>
+                                    <th key={symbol}>{symbol}</th>
                                 ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {states.map((fromState) => (
+                                <tr key={fromState}>
+                                    <td>{fromState}</td>
+                                    {symbols.map((symbol) => (
+                                        <td key={`${fromState}-${symbol}`}>
+                                            {transitionsMatrix[fromState]?.[symbol] || "-"}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

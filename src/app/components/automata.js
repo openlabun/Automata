@@ -89,7 +89,7 @@ const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => 
     if(method === "thompson") {
 
       Object.keys(nfaTable).forEach((state, index) => {
-        if (index === 0) {
+        if (state == initial_state && firstState == null) {
           firstState = state;
           elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
           elements.push({
@@ -127,37 +127,36 @@ const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => 
         const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
         
         if (match) {
-          const state = match[1];      // The state (e.g., "A")
-          const transition = match[2];  // The transition symbol (e.g., "a")
-          const target = match[3];      // The target state (e.g., "B")
-      
-          if (firstState === null) {
-            firstState = state;
-            elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
+            const state = match[1];      // The state (e.g., "A")
+            const transition = match[2];  // The transition symbol (e.g., "a")
+            const target = match[3];      // The target state (e.g., "B")
+    
+            if (initial_state.includes(state) && firstState === null) {
+                firstState = state;
+                elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
+                elements.push({
+                    data: { source: "start", target: state, label: "" },
+                });
+            }
+    
+            if (!visitedNodes.has(state)) {
+                const classes = accept_states.includes(state) ? "final" : "";  
+                elements.push({ data: { id: state, label: state }, classes }); 
+                visitedNodes.add(state);
+            }
+    
             elements.push({
-              data: { source: "start", target: state, label: "" },
+                data: { source: state, target: target, label: transition },
             });
-          }
-      
-  
-          if (!visitedNodes.has(state)) {
-            const classes = accept_states.includes(state) ? "final" : "";  
-            elements.push({ data: { id: state, label: state }, classes }); 
-            visitedNodes.add(state);
-          }
-      
-          elements.push({
-            data: { source: state, target: target, label: transition },
-          });
-      
-          if (!visitedNodes.has(target)) {
-            
-            const classes = accept_states.includes(target) ? "final" : "";  
-            elements.push({ data: { id: target, label: target }, classes });  
-            visitedNodes.add(target);
-          }
+    
+            if (!visitedNodes.has(target)) {
+                const classes = accept_states.includes(target) ? "final" : "";  
+                elements.push({ data: { id: target, label: target }, classes });  
+                visitedNodes.add(target);
+            }
         }
-      });
+    });
+    
       
     }
 
