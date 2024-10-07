@@ -183,6 +183,8 @@ export default function Home() {
       setInitialStates(initial_state);
       setAcceptStates(accept_states);
 
+      console.log(nfaTable);
+
     } else if(selectedMethod === "subconjuntos") {
 
       const {tranD, states, initialStates, acceptStates} = await subset(postfix, symbols);
@@ -258,13 +260,20 @@ export default function Home() {
 
     const invalidOr = /.+\|.+/;
 
-    if (regex.includes('|')) { // Verifica si hay un operador |
+    if (regex.includes('|')) { 
       if (!invalidOr.test(regex)) {
         setError("El operador | requiere dos operandos.");
         setShowTable(false);
         setNfaTable(null);
         return;
       }
+    }
+
+    if (regex.includes('.')) {
+      setError("La expresión no puede contener el carácter '.'");
+      setShowTable(false);
+      setNfaTable(null);
+      return;
     }
 
     try {

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
 const Subset = ({ TranD, States, InitialState, AcceptState }) => {
-
     if (!TranD || !States) {
         return <div>Datos no disponibles</div>;
     }
@@ -10,10 +9,12 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
     const transitionsMatrix = {};
 
     TranD.forEach(transitionStr => {
-        const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
+        
+        const match = transitionStr.match(/(\w+):\(\s*([^,]*)\s*,\s*(\w+)\s*\)/);
+
         if (match) {
             const fromState = match[1];    
-            const symbol = match[2];       
+            const symbol = match[2].trim() || ",";
             const toState = match[3];       
 
             if (!transitionsMatrix[fromState]) {
@@ -23,12 +24,13 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
         }
     });
 
+    // Extract unique symbols including commas
     const symbols = Array.from(new Set(TranD.map(transitionStr => {
-        const match = transitionStr.match(/:\((\w+),/);
-        return match ? match[1] : null;  
-    }))).filter(Boolean); 
+        const match = transitionStr.match(/\(\s*([^,]*)\s*,\s*/);
+        return match ? match[1].trim() || "," : null;
+    }))).filter(Boolean);
 
-    const allStates = Object.keys(States).map(state => state.replace(/\*|->/g, "")); 
+    const allStates = Object.keys(States);
 
     return (
         <>
@@ -47,10 +49,9 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                         </thead>
                         <tbody>
                             {allStates.map((fromState) => {
-
-                                //check if the InitialState and AcceptState are lists
+                                // Check if InitialState and AcceptState are arrays
                                 if (!Array.isArray(InitialState) || !Array.isArray(AcceptState)) {
-                                    return; // Exit if they are not arrays
+                                    return null; // Exit if they are not arrays
                                 }
 
                                 const isInitialState = InitialState.includes(fromState);

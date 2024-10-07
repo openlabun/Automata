@@ -9,16 +9,16 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
     }
 
     const transitionsMatrix = {};
-    const statesInTransitions = new Set(); 
+    const statesInTransitions = new Set();
 
     TranD.forEach(transitionStr => {
-        const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
+        
+        const match = transitionStr.match(/(\w+):\(\s*([^,]*)\s*,\s*(\w+)\s*\)/);
         if (match) {
             const fromState = match[1];
-            const symbol = match[2];
+            const symbol = match[2].trim() || ","; 
             const toState = match[3];
 
-            // Add fromState and toState to the set
             statesInTransitions.add(fromState);
             statesInTransitions.add(toState);
 
@@ -29,13 +29,12 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
         }
     });
 
-    // Get unique symbols from TranD
+
     const symbols = Array.from(new Set(TranD.map(transitionStr => {
-        const match = transitionStr.match(/:\((\w+),/);
-        return match ? match[1] : null;
+        const match = transitionStr.match(/\(\s*([^,]*)\s*,/);
+        return match ? match[1].trim() || "," : null; 
     }))).filter(Boolean);
 
-   
     const allStates = Array.from(statesInTransitions);
 
     return (
@@ -57,7 +56,7 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
                             {allStates.map((fromState) => {
                                 // Check if the InitialState and AcceptState are lists
                                 if (!Array.isArray(InitialState) || !Array.isArray(AcceptState)) {
-                                    return; 
+                                    return null; 
                                 }
 
                                 const isInitialState = InitialState.includes(fromState);

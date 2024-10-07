@@ -43,12 +43,15 @@
   box-sizing: border-box;
 }
 
+
+
 .data {
   display: flex;
   flex-basis: 50%;
   flex-direction: column;
   max-width: 100%; 
-  padding: 20px;
+  overflow-x: hidden; 
+  padding: 20px; 
   border-right: 2px solid #333;
 }
 

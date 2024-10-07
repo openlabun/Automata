@@ -123,9 +123,9 @@ const Automata = ({ nfaTable, regex, method, initial_state, accept_states }) => 
     } else {
 
       nfaTable.forEach(transitionStr => {
-        // Extract the state, transition symbol, and target state
-        const match = transitionStr.match(/(\w+):\((\w+),(\w+)\)/);
-        
+
+        const match = transitionStr.match(/(\w+):\(\s*(.*?)\s*,\s*(\w+)\s*\)/);
+
         if (match) {
             const state = match[1];      // The state (e.g., "A")
             const transition = match[2];  // The transition symbol (e.g., "a")
