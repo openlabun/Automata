@@ -150,9 +150,6 @@ export default function Home() {
       const dataValidate = await responseValidate.json();
   
       if (responseValidate.ok) {
-
-        console.log('toda la data', dataValidate);
-
         return {
           tranD: dataValidate.TranD,
           states: dataValidate.States,
@@ -168,7 +165,6 @@ export default function Home() {
   };
 
   const handleMethodSwitch = async () => {
-    console.log(`Switched to: ${selectedMethod}`);
   
     const { postfix, symbols, nfaTable, initial_state, accept_states } = await thompson();
 
@@ -183,8 +179,6 @@ export default function Home() {
       setInitialStates(initial_state);
       setAcceptStates(accept_states);
 
-      console.log(nfaTable);
-
     } else if(selectedMethod === "subconjuntos") {
 
       const {tranD, states, initialStates, acceptStates} = await subset(postfix, symbols);
@@ -194,11 +188,6 @@ export default function Home() {
       setInitialStates(initialStates);
       setAcceptStates(acceptStates);
 
-      console.log(tranD);
-      console.log(states);
-      console.log(initialStates);
-      console.log(acceptStates);
-
     } else if (selectedMethod === "estadosSignificativos") {
 
       const {tranD, states, initialStates, acceptStates} = await significantStates(postfix, symbols);
@@ -207,12 +196,6 @@ export default function Home() {
       setStates(states);
       setInitialStates(initialStates);
       setAcceptStates(acceptStates);
-
-      console.log(tranD);
-      console.log(states);
-      console.log(initialStates);
-      console.log(acceptStates);
-
     }
 
   };

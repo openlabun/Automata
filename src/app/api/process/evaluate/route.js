@@ -11,7 +11,7 @@ export async function POST(req) {
             method: method,
         };
 
-        const response = await fetch('http://127.0.0.1:8000/api/evaluate/', {
+        const response = await fetch('https://proyectosingenieria.uninorte.edu.co/automatoncraft/api/evaluate/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

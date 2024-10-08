@@ -8,7 +8,7 @@ export async function POST(req) {
 
         const payload = { expression: regex };
 
-        const response = await fetch('http://127.0.0.1:8000/api/validate/', {
+        const response = await fetch('https://proyectosingenieria.uninorte.edu.co/automatoncraft/api/validate/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

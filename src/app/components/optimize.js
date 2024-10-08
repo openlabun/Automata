@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
 const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
-    console.log("TranDdddd", TranD);
 
     if (!TranD || !States) {
         return <div>Datos no disponibles</div>;

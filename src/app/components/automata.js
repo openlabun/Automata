@@ -39,7 +39,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
                       method === "subconjuntos" ? "subset" : 
                       "optimize";
     try {
-        console.log('metodo a usar', method_to_use);
   
         const response = await fetch("/api/process/evaluate", {
             method: "POST",
@@ -53,7 +52,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         });
   
         const data = await response.json();
-        console.log('data enviada', data); 
   
         if (response.ok) {
 
@@ -70,7 +68,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
               paths: data.paths
           };
         } else {
-            console.error("Error response:", data);
             return {
                 status: false,
                 paths: [],     
@@ -78,7 +75,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         }
   
     } catch (error) {
-          console.error("Error processing the regular expression.", error);
           return {
               status: false, 
               paths: [],     
@@ -97,11 +93,7 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         setError("");
     }
 
-    console.log('string', stringToEvaluate);
     const { status, paths } = await evaluate();
-    console.log('status', status);
-    console.log('paths', paths);
-    console.log('trigger', triggerAnimation);
 
     setAccepted(status);
     setPaths(paths);
@@ -306,7 +298,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         if (paths.length === 0) {
           // Find the node with label 'A'
           const targetNode = cyRef.current.nodes().filter((node) => node.data('label') === 'A')[0]; 
-          console.log('Target node with label A:', targetNode);
 
           if (targetNode) {
             targetNode.addClass("highlighted");
@@ -335,9 +326,8 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
           }
   
           const filteredPaths = removeSubPaths(paths);
-          console.log('Filtered paths for Thompson:', filteredPaths);
-  
           let foundAcceptedPath = false;
+
           for (const path of filteredPaths) {
             pathToAnimate = path.camino;
   
