@@ -194,6 +194,11 @@ export default function Home() {
       setInitialStates(initialStates);
       setAcceptStates(acceptStates);
 
+      console.log(tranD);
+      console.log(states);
+      console.log(initialStates);
+      console.log(acceptStates);
+
     } else if (selectedMethod === "estadosSignificativos") {
 
       const {tranD, states, initialStates, acceptStates} = await significantStates(postfix, symbols);
