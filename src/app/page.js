@@ -263,16 +263,14 @@ export default function Home() {
       return;
     }
 
-    const invalidOr = /.+\|.+/;
-
-    if (regex.includes('|')) { 
-      if (!invalidOr.test(regex)) {
-        setError("El operador | requiere dos operandos.");
-        setShowTable(false);
-        setNfaTable(null);
-        return;
-      }
+    const invalidOr = /\|\||^\||\|$/;
+    if (invalidOr.test(regex)) {
+      setError("El operador | requiere dos operandos.");
+      setShowTable(false);
+      setNfaTable(null);
+      return;
     }
+    
 
     if (regex.includes('.')) {
       setError("La expresión no puede contener el carácter '.'");

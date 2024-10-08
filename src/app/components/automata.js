@@ -91,18 +91,17 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     event.preventDefault();
 
     if (!stringToEvaluate.trim()) {
-      setError("El vació se representa como &.");
+      setError("La cadena vacía se representa como &.");
       return;
     } else {
         setError("");
     }
 
     console.log('string', stringToEvaluate);
-
     const { status, paths } = await evaluate();
-
     console.log('status', status);
     console.log('paths', paths);
+    console.log('trigger', triggerAnimation);
 
     setAccepted(status);
     setPaths(paths);
@@ -296,13 +295,26 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
 
   useEffect(() => {
     const animatePath = async () => {
-      if (!cyRef.current || paths.length === 0) return;
+      if (!cyRef.current) return;
   
       const controller = new AbortController();
       setAbortController(controller);
   
       try {
-        cyRef.current.elements().removeClass("highlighted");
+        
+
+        if (paths.length === 0) {
+          // Find the node with label 'A'
+          const targetNode = cyRef.current.nodes().filter((node) => node.data('label') === 'A')[0]; 
+          console.log('Target node with label A:', targetNode);
+
+          if (targetNode) {
+            targetNode.addClass("highlighted");
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            targetNode.removeClass("highlighted");
+          }
+          return; 
+        }
   
         let pathToAnimate;
   
@@ -345,11 +357,11 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
               );
   
               currentNode.addClass("highlighted");
-
+  
               await new Promise((resolve) => setTimeout(resolve, 600));
               edge.addClass("highlighted");
               currentNode.removeClass("highlighted");
-
+  
               await new Promise((resolve) => setTimeout(resolve, 600));
               edge.removeClass("highlighted");
             }
@@ -359,35 +371,44 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
             );
             finalNode.addClass("highlighted");
   
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 500));
             finalNode.removeClass("highlighted");
   
             if (foundAcceptedPath) break;
           }
   
         } else {
-          
-          pathToAnimate = paths; 
+          pathToAnimate = paths;
   
           for (let i = 0; i < pathToAnimate.length; i++) {
             if (controller.signal.aborted) throw new Error("Animation aborted");
-  
+          
             const [currentState, input, nextStates] = pathToAnimate[i];
-  
+          
             const currentNode = cyRef.current.$(`#${currentState}`);
-            const edge = cyRef.current.edges(
-              `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
-            );
-  
-            currentNode.addClass("highlighted");
-
-            await new Promise((resolve) => setTimeout(resolve, 600));
-
-            currentNode.removeClass("highlighted");
-            edge.addClass("highlighted");
-  
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            edge.removeClass("highlighted");
+            
+            if (pathToAnimate.length === 1) {
+              
+              currentNode.addClass("highlighted");
+          
+              await new Promise((resolve) => setTimeout(resolve, 800)); 
+          
+              currentNode.removeClass("highlighted");
+            } else {
+              const edge = cyRef.current.edges(
+                `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
+              );
+          
+              currentNode.addClass("highlighted");
+          
+              await new Promise((resolve) => setTimeout(resolve, 600));
+          
+              currentNode.removeClass("highlighted");
+              edge.addClass("highlighted");
+          
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              edge.removeClass("highlighted");
+            }
           }
   
           const finalNode = cyRef.current.$(
@@ -395,7 +416,7 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
           );
           finalNode.addClass("highlighted");
   
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 500));
   
           finalNode.removeClass("highlighted");
         }
@@ -417,7 +438,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     }
   }, [triggerAnimation, method]);
   
-
   return (
     <div className={styles.automatacontainer}>
       <div className={styles.infoContainer}>
