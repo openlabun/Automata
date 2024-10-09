@@ -8,6 +8,10 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+.transitionsTable{
+  margin-top: 15px;
+}
+
 .statesTable{
   margin-top: 20px;
   margin-bottom: 20px;
@@ -197,6 +201,36 @@
   background-color: darkred;
   transform: scale(1.05); 
 }
+
+
+.identicalStatesSection {
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.identicalStatesSection h2 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.list {
+  list-style-type: none; 
+  padding: 0; 
+}
+
+.listItem {
+  background-color: #464646;
+  border: 1px solid #ccc; 
+  border-radius: 5px;
+  padding: 10px; 
+  margin: 5px 0; 
+}
+
+
 
 
 

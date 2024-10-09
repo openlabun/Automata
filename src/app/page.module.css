@@ -43,8 +43,6 @@
   box-sizing: border-box;
 }
 
-
-
 .data {
   display: flex;
   flex-basis: 50%;
@@ -178,7 +176,6 @@
 .information {
   display: flex;
   flex-direction: column; 
-  gap: 20px; 
   overflow-y: auto; 
   max-height: 83vh;
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
 const Subset = ({ TranD, States, InitialState, AcceptState }) => {
+
     if (!TranD || !States) {
         return <div>Datos no disponibles</div>;
     }
@@ -9,25 +10,24 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
     const transitionsMatrix = {};
 
     TranD.forEach(transitionStr => {
-        
         const match = transitionStr.match(/(\w+):\(\s*([^,]*)\s*,\s*(\w+)\s*\)/);
 
         if (match) {
-            const fromState = match[1];    
-            const symbol = match[2].trim() || ",";
-            const toState = match[3];       
+            const fromState = match[1];
+            const symbol = match[2].trim();  
+            const toState = match[3];
 
             if (!transitionsMatrix[fromState]) {
                 transitionsMatrix[fromState] = {};
             }
-            transitionsMatrix[fromState][symbol] = toState;
+            transitionsMatrix[fromState][symbol || " "] = toState;
         }
     });
 
-    // Extract unique symbols including commas
     const symbols = Array.from(new Set(TranD.map(transitionStr => {
         const match = transitionStr.match(/\(\s*([^,]*)\s*,\s*/);
-        return match ? match[1].trim() || "," : null;
+        const symbol = match ? match[1].trim() : null;
+        return symbol === "" ? " " : symbol;  
     }))).filter(Boolean);
 
     const allStates = Object.keys(States);
@@ -42,16 +42,18 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                         <thead>
                             <tr>
                                 <th>Estado</th>
-                                {symbols.map((symbol) => (
-                                    <th key={symbol}>{symbol}</th>
-                                ))}
+                                {symbols.map((symbol, index) => (
+                                    <th key={index}>
+                                        {symbol === "[empty]" ? "[Espacio]" : symbol}
+                                    </th>
+                                ))} 
                             </tr>
                         </thead>
                         <tbody>
                             {allStates.map((fromState) => {
-                                // Check if InitialState and AcceptState are arrays
+                                
                                 if (!Array.isArray(InitialState) || !Array.isArray(AcceptState)) {
-                                    return null; // Exit if they are not arrays
+                                    return null; 
                                 }
 
                                 const isInitialState = InitialState.includes(fromState);
@@ -64,8 +66,8 @@ const Subset = ({ TranD, States, InitialState, AcceptState }) => {
                                         <td>{displayState}</td>
                                         {symbols.map((symbol) => (
                                             <td key={`${fromState}-${symbol}`}>
-                                                {transitionsMatrix[fromState]?.[symbol]
-                                                    ? transitionsMatrix[fromState][symbol].replace(/\*|->/g, "")
+                                                {transitionsMatrix[fromState]?.[symbol] 
+                                                    ? transitionsMatrix[fromState][symbol].replace(/\*|->/g, "") 
                                                     : "-"}
                                             </td>
                                         ))}

@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./component.module.css";
 
 const Alphabet = ({ symbols }) => {
-    const [alphabet, setAlphabet] = useState([]);
 
+    const [alphabet, setAlphabet] = useState([]);   
+    
+    const filteredSymbols = useMemo(() => {
+        return symbols.filter(symbol => symbol !== '&');
+    }, [symbols]);  
     useEffect(() => {
-        if (symbols) {
-            setAlphabet(symbols);
-        }
-    }, [symbols]);
-
+        setAlphabet(filteredSymbols);
+    }, [filteredSymbols]);  
     return (
         <div className={styles.transitionsTable}>
             <h2>Alfabeto</h2>

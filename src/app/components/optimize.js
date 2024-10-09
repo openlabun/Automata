@@ -11,11 +11,10 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
     const statesInTransitions = new Set();
 
     TranD.forEach(transitionStr => {
-        
         const match = transitionStr.match(/(\w+):\(\s*([^,]*)\s*,\s*(\w+)\s*\)/);
         if (match) {
             const fromState = match[1];
-            const symbol = match[2].trim() || ","; 
+            const symbol = match[2].trim() || ",";
             const toState = match[3];
 
             statesInTransitions.add(fromState);
@@ -28,17 +27,34 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
         }
     });
 
-
     const symbols = Array.from(new Set(TranD.map(transitionStr => {
         const match = transitionStr.match(/\(\s*([^,]*)\s*,/);
-        return match ? match[1].trim() || "," : null; 
+        return match ? match[1].trim() || "," : null;
     }))).filter(Boolean);
 
     const allStates = Array.from(statesInTransitions);
+    const equivalenceMap = new Map();
+
+    Object.entries(States).forEach(([state, equivalents]) => {
+        const key = equivalents.sort().join(",");
+        if (!equivalenceMap.has(key)) {
+            equivalenceMap.set(key, []);
+        }
+        equivalenceMap.get(key).push(state);
+    });
+
+    // Filtrar solo los grupos con más de un estado (estados idénticos)
+    const identicalStates = Array.from(equivalenceMap.entries())
+        .filter(([, group]) => group.length > 1)
+        .map(([key, group]) => (
+            <p key={key}>
+                {group.join(", ")}
+            </p>
+        ));
 
     return (
         <>
-            {/* Tabla de Transiciones */}
+            {/* Transitions Table */}
             <div className={styles.transitionsTable}>
                 <h2>Transiciones del Autómata</h2>
                 <div className={styles.tableContainer}>
@@ -47,15 +63,16 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
                             <tr>
                                 <th>Estado</th>
                                 {symbols.map((symbol) => (
-                                    <th key={symbol}>{symbol}</th>
+                                    <th key={symbol}>
+                                        {symbol === "," ? " " : symbol} 
+                                    </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {allStates.map((fromState) => {
-                                // Check if the InitialState and AcceptState are lists
                                 if (!Array.isArray(InitialState) || !Array.isArray(AcceptState)) {
-                                    return null; 
+                                    return null;
                                 }
 
                                 const isInitialState = InitialState.includes(fromState);
@@ -70,7 +87,7 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
                                             <td key={`${fromState}-${symbol}`}>
                                                 {transitionsMatrix[fromState]?.[symbol]
                                                     ? transitionsMatrix[fromState][symbol].replace(/\*|->/g, "")
-                                                    : "-"}  {/* Show "-" if no transition */}
+                                                    : "-"} 
                                             </td>
                                         ))}
                                     </tr>
@@ -81,7 +98,7 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
                 </div>
             </div>
 
-            {/* Tabla de Estados Equivalentes */}
+            {/* Equivalent States Table */}
             <div className={styles.statesTable}>
                 <h2>Estados Equivalentes</h2>
                 <div className={styles.tableContainer}>
@@ -108,6 +125,17 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
                     </table>
                 </div>
             </div>
+
+            {identicalStates.length > 0 && (
+            <div className={styles.identicalStatesSection}>
+                <h2 className={styles.title}>Estados Idénticos</h2>
+                <ul className={styles.list}>
+                    {identicalStates.map((state, index) => (
+                        <p key={index} className={styles.listItem}>{state}</p>
+                    ))}
+                </ul>
+            </div>
+            )}
         </>
     );
 };

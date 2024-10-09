@@ -1,43 +1,60 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./component.module.css";
 
-const TransitionTable = ({ nfaTable }) => {
+const TransitionTable = ({transitionTable, initial_state, accept_states }) => {
+
     const [states, setStates] = useState([]);
     const [symbols, setSymbols] = useState([]);
     const [transitionsMatrix, setTransitionsMatrix] = useState({});
 
     useEffect(() => {
-        if (nfaTable) {
-            const parsedStates = new Set();
-            const parsedSymbols = new Set();
-            const transitionMatrix = {};
+        const allStates = new Set();
+        Object.keys(transitionTable).forEach((key) => {
+            allStates.add(parseInt(key)); 
+            Object.values(transitionTable[key]).forEach(destinations => {
+                destinations.forEach(state => {
+                    allStates.add(state); 
+                });
+            });
+        });
 
-            for (const fromState in nfaTable) {
-                parsedStates.add(fromState);
-                const transitions = nfaTable[fromState];
+        const allSymbols = new Set();
+        Object.values(transitionTable).forEach(transitions => {
+            Object.keys(transitions).forEach(symbol => {
+                allSymbols.add(symbol);
+            });
+        });
 
-                for (const symbol in transitions) {
-                    parsedSymbols.add(symbol); 
-                    const toStates = transitions[symbol];
+        const matrix = {};
+        allStates.forEach((state) => {
+            matrix[state] = {};
+            [...allSymbols].forEach((symbol) => {
+                // If the state has transitions for the symbol, join them with commas
+                matrix[state][symbol] = transitionTable[state]?.[symbol] ? transitionTable[state][symbol].join(", ") : "-";
+            });
+        });
 
-                    const formattedStates =
-                        toStates.length > 1 ? `{${toStates.join(", ")}}` : toStates[0];
+        setStates([...allStates]);
+        setSymbols([...allSymbols]);
+        setTransitionsMatrix(matrix);
+    }, [transitionTable]);
 
-                    if (!transitionMatrix[fromState]) {
-                        transitionMatrix[fromState] = {};
-                    }
+    const formatStateLabel = (state) => {
+        const stateNumber = Number(state);
 
-                    transitionMatrix[fromState][symbol] = formattedStates;
-                }
-            }
-
-            const sortedStates = Array.from(parsedStates).sort((a, b) => a - b);
-            const sortedSymbols = Array.from(parsedSymbols);
-            setStates(sortedStates);
-            setSymbols(sortedSymbols);
-            setTransitionsMatrix(transitionMatrix);
+        let label = stateNumber;
+        if (stateNumber === initial_state) label = `-> ${label}`;
+        if (Array.isArray(accept_states) ? accept_states.includes(stateNumber) : stateNumber === accept_states) {
+            label = `* ${label}`;
         }
-    }, [nfaTable]);
+
+        return label;
+    };
+
+    // Memoize transitionsMatrix, states, and symbols
+    const memoizedTransitionsMatrix = useMemo(() => transitionsMatrix, [transitionsMatrix]);
+    const memoizedStates = useMemo(() => states, [states]);
+    const memoizedSymbols = useMemo(() => symbols, [symbols]);
 
     return (
         <div className={styles.transitionsTable}>
@@ -48,18 +65,18 @@ const TransitionTable = ({ nfaTable }) => {
                         <thead>
                             <tr>
                                 <th>Estado</th>
-                                {symbols.map((symbol) => (
+                                {memoizedSymbols.map((symbol) => (
                                     <th key={symbol}>{symbol}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {states.map((fromState) => (
+                            {memoizedStates.map((fromState) => (
                                 <tr key={fromState}>
-                                    <td>{fromState}</td>
-                                    {symbols.map((symbol) => (
+                                    <td>{formatStateLabel(fromState)}</td>
+                                    {memoizedSymbols.map((symbol) => (
                                         <td key={`${fromState}-${symbol}`}>
-                                            {transitionsMatrix[fromState]?.[symbol] || "-"}
+                                            {memoizedTransitionsMatrix[fromState]?.[symbol] || "-"}
                                         </td>
                                     ))}
                                 </tr>

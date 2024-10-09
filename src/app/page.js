@@ -1,11 +1,12 @@
 "use client";
-import { useState, useEffect} from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "./page.module.css";
 import Automata from "./components/automata";
 import TransitionTable from "./components/transitionTable";
 import Alphabet from "./components/alphabet";
 import Subset from "./components/subset";
 import Optimize from "./components/optimize";
+import { handleAutomatonProcess } from "@/dataRetriever/data";
 
 export default function Home() {
   const [regex, setRegex] = useState("");
@@ -13,218 +14,89 @@ export default function Home() {
   const [error, setError] = useState("");
   const [symbols, setSymbols] = useState([]);
   const [nfaTable, setNfaTable] = useState(null);
+  const [transThomposn, setTransThomposn] = useState(null);
   const [tranD, setTranD] = useState(null);
-  const [significantStatesVariable, setSignificantStatesVariable] = useState(null);
   const [states, setStates] = useState(null);
-  const [initialStates, setInitialStates] = useState(null);
+  const [initialStates, setInitialState] = useState(null);
   const [acceptStates, setAcceptStates] = useState(null);
-  const methodLabels = {
+  
+  const methodLabels = useMemo(() => ({
     thompson: 'Método de Thompson',
     subconjuntos: 'Método de Subconjuntos',
     estadosSignificativos: 'Método de Estados Significativos',
-  };
+  }), []);
+  
   const [selectedMethod, setSelectedMethod] = useState('thompson');
-  const [lastRegex, setLastRegex] = useState("");
-  const [isReady, setIsReady] = useState(false); 
 
   useEffect(() => {
-    if (isReady) {
-      handleMethodSwitch();
+    if (selectedMethod) {
+      handleMethodSwitch(); 
     }
-  }, [selectedMethod, isReady]); 
+  }, [selectedMethod]);
   
-
-  const thompson = async () => {
-
-    let postfix = {};
-    let symbols = {};
-    let nfaTable = {};
-    let initial_state = null;
-    let accept_states = null;
-
-    if(!regex){
+  const handleMethodSwitch = async () => {
+    //regex can not be empty
+    if (!regex) {
       return;
     }
 
-    try {
-      const responseValidate = await fetch('/api/process/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          regex,  // Send the regex key to match the API
-        }),
-      });
+    setShowTable(false);
+    setNfaTable(null);
+    setSymbols([]);
+    setTranD([]);
+    setStates([]);
+    setInitialState([]);
+    setAcceptStates([]);
+    
+    const method_to_use = selectedMethod === "thompson" ? "thompson" :
+                          selectedMethod === "subconjuntos" ? "subset" :
+                          "optimize";
 
-      const dataValidate = await responseValidate.json();
+    const result = await handleAutomatonProcess(regex, method_to_use);
 
-      if (responseValidate.ok) {
+    if (result) {
+      setSymbols(result.symbols);
+      setTranD(result.TranD);
+      setStates(result.States);
+      setInitialState(result.initial_state);
+      setAcceptStates(result.accept_states);
+      setShowTable(true); 
 
-        postfix = dataValidate.postfix;
-        symbols = dataValidate.symbols;
-
-        const responseThompson = await fetch('/api/process/thompson', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            postfix: dataValidate.postfix,
-            symbols: dataValidate.symbols,
-          }),
-        });
-
-        const dataThompson = await responseThompson.json();
-
-        if (responseThompson.ok) {
-
-          setIsReady(true);
-          postfix = dataValidate.postfix;
-          symbols = dataValidate.symbols;
-          nfaTable = dataThompson.transition_table;
-          initial_state = dataThompson.initial_state;
-          accept_states = dataThompson.accept_states;
-
-          return { postfix, symbols, nfaTable, initial_state, accept_states};
-
-        } else {
-          setError(`Error: ${dataThompson.error}`);
-        }
+      if (selectedMethod === "thompson") {
+        setTransThomposn(result.transition_table);
+        setNfaTable(result.transition_table);
       } else {
-        setError(`Error: ${dataValidate.error}`);
+        setNfaTable(result.TranD);
       }
-    } catch (error) {
-      setError('Failed to process the regular expression.');
+
+    } else {
+      setError("Error processing the automaton.");
+      setShowTable(false);
     }
-  };
-
-  const subset = async (postfix, symbols) => {
-    if (!postfix || !symbols) return; 
-  
-    try {
-      const responseValidate = await fetch('/api/process/subset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postfix,
-          symbols,
-        }),
-      });
-  
-      const dataValidate = await responseValidate.json();
-  
-      if (responseValidate.ok) {
-        return {
-          tranD: dataValidate.TranD,
-          states: dataValidate.States,
-          initialStates: dataValidate.initial_state,
-          acceptStates: dataValidate.accept_states,
-        };
-      } else {
-        setError(`Error: ${dataValidate.error}`);
-      }
-    } catch (error) {
-      setError('Failed to process the regular expression.');
-    }
-  };
-  
-  const significantStates = async (postfix, symbols) => {
-
-    if (!postfix || !symbols) return; 
-  
-    try {
-      const responseValidate = await fetch('/api/process/optimize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postfix,
-          symbols,
-        }),
-      });
-  
-      const dataValidate = await responseValidate.json();
-  
-      if (responseValidate.ok) {
-        return {
-          tranD: dataValidate.TranD,
-          states: dataValidate.States,
-          initialStates: dataValidate.initial_state,
-          acceptStates: dataValidate.accept_states,
-        };
-      } else {
-        setError(`Error: ${dataValidate.error}`);
-      }
-    } catch (error) {
-      setError('Failed to process the regular expression.');
-    }
-  };
-
-  const handleMethodSwitch = async () => {
-  
-    const { postfix, symbols, nfaTable, initial_state, accept_states } = await thompson();
-
-    if (!isReady) return;
-
-    setShowTable(true);
-    setSymbols(symbols);
-
-    if (selectedMethod === "thompson") {
-
-      setNfaTable(nfaTable);
-      setInitialStates(initial_state);
-      setAcceptStates(accept_states);
-
-    } else if(selectedMethod === "subconjuntos") {
-
-      const {tranD, states, initialStates, acceptStates} = await subset(postfix, symbols);
-      setNfaTable(tranD);
-      setTranD(tranD);
-      setStates(states);
-      setInitialStates(initialStates);
-      setAcceptStates(acceptStates);
-
-    } else if (selectedMethod === "estadosSignificativos") {
-
-      const {tranD, states, initialStates, acceptStates} = await significantStates(postfix, symbols);
-      setNfaTable(tranD);
-      setTranD(tranD);
-      setStates(states);
-      setInitialStates(initialStates);
-      setAcceptStates(acceptStates);
-    }
-
   };
 
   const handleSelectMethod = (method) => {
-    setSelectedMethod(method);
+    setSelectedMethod(method); 
+    setShowTable(false);
+    setNfaTable(null);
   };
 
   const handleInputChange = (event) => {
     setRegex(event.target.value);
-    setNfaTable(null);
-    setShowTable(false);
-    setLastRegex("");
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
+    if (!validateRegex()) return;
+    handleMethodSwitch();  // Procesa el autómata al enviar
+  };
 
-    if (regex.trim() === lastRegex) {
-      return;
-    }
-
-    setLastRegex(regex.trim());
-
-    if (regex.trim() === "") {
+  const validateRegex = () => {
+    if (!regex) {
       setError("La expresión regular no puede estar vacía.");
       setShowTable(false);
       setNfaTable(null);
-      return;
+      return false;
     }
 
     const isBalanced = (str) => {
@@ -232,7 +104,7 @@ export default function Home() {
       for (let char of str) {
         if (char === "(") stack.push(char);
         else if (char === ")") {
-          if (stack.length === 0) return false; 
+          if (stack.length === 0) return false;
           stack.pop();
         }
       }
@@ -243,23 +115,30 @@ export default function Home() {
       setError("Los paréntesis no están balanceados.");
       setShowTable(false);
       setNfaTable(null);
-      return;
+      return false;
     }
 
-    const invalidOr = /\|\||^\||\|$/;
+    const invalidOr = /\|\||^\||\|$|\(\||\|\)/;
     if (invalidOr.test(regex)) {
       setError("El operador | requiere dos operandos.");
       setShowTable(false);
       setNfaTable(null);
-      return;
+      return false;
     }
-    
 
     if (regex.includes('.')) {
       setError("La expresión no puede contener el carácter '.'");
       setShowTable(false);
       setNfaTable(null);
-      return;
+      return false;
+    }
+
+    const parentehsis = /\(\)/;
+    if (parentehsis.test(regex)) {
+      setError("La expresión no puede contener paréntesis vacíos.");
+      setShowTable(false);
+      setNfaTable(null);
+      return false;
     }
 
     try {
@@ -268,13 +147,11 @@ export default function Home() {
       setError("La expresión regular ingresada no es válida.");
       setShowTable(false);
       setNfaTable(null);
-      return;
+      return false;
     }
 
-    handleMethodSwitch();
-    
     setError("");
-    setShowTable(true);
+    return true;
   };
 
   return (
@@ -287,7 +164,8 @@ export default function Home() {
               <button
                 key={method}
                 className={`${styles.menuItem} ${selectedMethod === method ? styles.active : ''}`}
-                onClick={() => handleSelectMethod(method)}
+                onClick={() => handleSelectMethod(method)} 
+                disabled={selectedMethod === method} 
               >
                 {methodLabels[method]}
               </button>
@@ -319,23 +197,31 @@ export default function Home() {
             {error && <div className={styles.error}>{error}</div>}
           </form>
 
-          <div className={styles.information}>
-            {showTable && <div><Alphabet symbols={symbols} /></div>}
-            {showTable  && selectedMethod === "thompson" && <div><TransitionTable nfaTable={nfaTable} /></div>}
-            {showTable && selectedMethod === "subconjuntos" && (
-              <div><Subset TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} /></div>
-            )}
-            {showTable && selectedMethod === "estadosSignificativos" && (
-              <div><Optimize TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} /></div>
-            )}
-          </div>
-          
+          {showTable && (
+            <div className={styles.information}>
+              {/* El componente Alphabet permanece visible siempre */}
+              <Alphabet symbols={symbols} />
+
+              {/* Renderiza el componente según el método seleccionado */}
+              {selectedMethod === "thompson" && (
+                <TransitionTable transitionTable={transThomposn} initial_state={initialStates} accept_states={acceptStates} />
+              )}
+              {selectedMethod === "subconjuntos" && (
+                <Subset TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} />
+              )}
+              {selectedMethod === "estadosSignificativos" && (
+                <Optimize TranD={tranD} States={states} InitialState={initialStates} AcceptState={acceptStates} />
+              )}
+            </div>
+          )}
         </div>
-        <Automata nfaTable={nfaTable} method={selectedMethod} initial_state={initialStates} accept_states={acceptStates}/>
+
+        {/* El componente Automata visualiza el autómata en base al método y los estados */}
+        <Automata nfaTable={nfaTable} method={selectedMethod} initial_state={initialStates} accept_states={acceptStates} />
       </div>
 
       <footer className={styles.footer}>
-        <p>&copy; 2024 Automata Visualizer. Desarrollado por: Ana ardila, Luis Parra, Edgar Torres & Juan Vargas.</p>
+        <p>&copy; 2024 Automata Visualizer. Desarrollado por: Ana Ardila, Luis Parra, Edgar Torres & Juan Vargas.</p>
       </footer>
     </div>
   );

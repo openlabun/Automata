@@ -3,10 +3,12 @@ import cytoscape from "cytoscape";
 import dagre from 'cytoscape-dagre';
 import styles from "./component.module.css";
 import styles2 from "/src/app/page.module.css";
+import { handleAutomatonEvaluate } from "@/dataRetriever/data";
 
 cytoscape.use(dagre);
 
 const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
+
   const cyContainer = useRef(null);
   const cyRef = useRef(null); 
   const [stringToEvaluate, setStringToEvaluate] = useState("");
@@ -38,56 +40,39 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     const method_to_use = method === "thompson" ? "thompson" : 
                       method === "subconjuntos" ? "subset" : 
                       "optimize";
-    try {
-  
-        const response = await fetch("/api/process/evaluate", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                inputString: stringToEvaluate,
-                method: method_to_use,
-            }),
-        });
-  
-        const data = await response.json();
-  
-        if (response.ok) {
 
-          let string_status = false;
+    const evaluationResult = await handleAutomatonEvaluate(method_to_use, stringToEvaluate);
 
-          if (method === "thompson") {
-            string_status = data.status === 'Aceptada';
-          } else {
-            string_status = data.status;
-          }
+    if (!evaluationResult) {
+        return {
+            status: false,
+            paths: [],
+        };
+    }
 
-          return {
-              status: string_status,
-              paths: data.paths
-          };
-        } else {
-            return {
-                status: false,
-                paths: [],     
-            };
-        }
-  
-    } catch (error) {
-          return {
-              status: false, 
-              paths: [],     
-          };
-      }
-  };
+    const { status, paths } = evaluationResult;
+
+    let string_status = false;
+
+    if (method === "thompson") {
+        string_status = status === 'Aceptada'; 
+    } else {
+        string_status = status;
+    }
+
+    return {
+        status: string_status,
+        paths: paths,
+    };
+};
+
   
   const handleSubmit = async (event) => {
 
     event.preventDefault();
 
-    if (!stringToEvaluate.trim()) {
-      setError("La cadena vacía se representa como &.");
+    if (!stringToEvaluate) {
+      setError("La cadena a evaluar no puede estar vacía.");
       return;
     } else {
         setError("");
@@ -106,14 +91,13 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
 
     if (!nfaTable) {
       setAccepted(null); 
-      //abort ongoing animation
       if (abortController) {
         abortController.abort();
       }
       setIsDisabled(true);
       setIsAnimating(false);
-      //clear the inputs value
       setStringToEvaluate("");
+      setError("");
       return
     };
 
@@ -123,6 +107,20 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     setIsDisabled(false);
 
     if(method === "thompson") {
+
+      // nfatable validation format for thompson
+      const isValidFormat = Object.values(nfaTable).every(state =>
+          typeof state === 'object' &&
+          !Array.isArray(state) &&
+          Object.values(state).every(transitionTargets =>
+              Array.isArray(transitionTargets)
+          )
+      );
+
+      if (!isValidFormat) {
+          console.warn("El formato de nfaTable no es válido.");
+          return; 
+      }
 
       Object.keys(nfaTable).forEach((state, index) => {
         if (state == initial_state && firstState == null) {
@@ -158,8 +156,22 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     
     } else {
 
-      nfaTable.forEach(transitionStr => {
+      // nfatable validation format for subset and optimize
+      const isInvalidFormat = (table) => {
+          if (typeof table === 'object' && table !== null) {
+              // Check if the table has at least one state with transitions
+              return Object.values(table).some(
+                  transitions => typeof transitions === 'object' && transitions !== null && Object.values(transitions).some(Array.isArray)
+              );
+          }
+          return false;
+      };
+    
+      if (isInvalidFormat(nfaTable)) {
+          return;  
+      }
 
+      nfaTable.forEach(transitionStr => {
         const match = transitionStr.match(/(\w+):\(\s*(.*?)\s*,\s*(\w+)\s*\)/);
 
         if (match) {
@@ -293,8 +305,7 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
       setAbortController(controller);
   
       try {
-        
-
+    
         if (paths.length === 0) {
           // Find the node with label 'A'
           const targetNode = cyRef.current.nodes().filter((node) => node.data('label') === 'A')[0]; 
@@ -310,63 +321,104 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         let pathToAnimate;
   
         if (method === "thompson") {
+
           function removeSubPaths(paths) {
             function isSubset(path1, path2) {
-              return path1.every((value, index) => value === path2[index]);
+                return path1.every((value, index) => value === path2[index]);
             }
-  
-            return paths.filter((currentPath, index) => {
-              return !paths.some((otherPath, otherIndex) => {
-                if (index !== otherIndex) {
-                  return isSubset(currentPath.camino, otherPath.camino);
+            
+            const uniquePaths = new Map();
+            
+            // Filtrar caminos duplicados y mantener solo el primero
+            paths.forEach((currentPath) => {
+                const caminoKey = JSON.stringify(currentPath.camino);
+                if (!uniquePaths.has(caminoKey)) {
+                    uniquePaths.set(caminoKey, currentPath);
                 }
-                return false;
-              });
             });
+    
+            const filteredPaths = Array.from(uniquePaths.values()).filter((currentPath, index, array) => {
+                // Check if the current path is a subset of any other path
+                const isSubsetOfAnotherPath = array.some((otherPath, otherIndex) => {
+                    if (index !== otherIndex) {
+                        return isSubset(currentPath.camino, otherPath.camino);
+                    }
+                    return false;
+                });
+    
+                // If it is a subset, check if it's accepted or not
+                if (isSubsetOfAnotherPath) {
+                    return !array.some((otherPath, otherIndex) => {
+                        return (
+                            index !== otherIndex &&
+                            isSubset(currentPath.camino, otherPath.camino) &&
+                            otherPath.aceptado
+                        );
+                    });
+                }
+    
+                // If it's not a subset, keep it
+                return true;
+            });
+    
+            // Eliminar caminos que son subconjuntos de cualquier otro camino aceptado
+            const finalFilteredPaths = filteredPaths.filter(currentPath => {
+                return !filteredPaths.some(otherPath => {
+                    return (
+                        currentPath !== otherPath &&
+                        isSubset(currentPath.camino, otherPath.camino)
+                    );
+                });
+            });
+    
+            return finalFilteredPaths;
           }
-  
+    
           const filteredPaths = removeSubPaths(paths);
-          let foundAcceptedPath = false;
 
+          let foundAcceptedPath = false;
           for (const path of filteredPaths) {
-            pathToAnimate = path.camino;
-  
-            if (path.aceptado) {
-              foundAcceptedPath = true;
-            }
-  
-            for (let i = 0; i < pathToAnimate.length - 1; i++) {
-              if (controller.signal.aborted) throw new Error("Animation aborted");
-  
-              const currentState = pathToAnimate[i];
-              const nextState = pathToAnimate[i + 1];
-  
-              const currentNode = cyRef.current.$(`#${currentState}`);
-              const edge = cyRef.current.edges(
-                `[source = "${currentState}"][target = "${nextState}"]`
-              );
-  
-              currentNode.addClass("highlighted");
-  
-              await new Promise((resolve) => setTimeout(resolve, 600));
-              edge.addClass("highlighted");
-              currentNode.removeClass("highlighted");
-  
-              await new Promise((resolve) => setTimeout(resolve, 600));
-              edge.removeClass("highlighted");
-            }
-  
-            const finalNode = cyRef.current.$(
-              `#${pathToAnimate[pathToAnimate.length - 1]}`
-            );
-            finalNode.addClass("highlighted");
-  
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            finalNode.removeClass("highlighted");
-  
-            if (foundAcceptedPath) break;
+          pathToAnimate = path.camino;
+
+          if (path.aceptado) {
+            foundAcceptedPath = true;
           }
-  
+
+          for (let i = 0; i < pathToAnimate.length - 1; i++) {
+            if (controller.signal.aborted) throw new Error("Animation aborted");
+
+            const currentState = pathToAnimate[i];
+            const nextState = pathToAnimate[i + 1];
+
+            const currentNode = cyRef.current.$(`#${currentState}`);
+            const edge = cyRef.current.edges(
+              `[source = "${currentState}"][target = "${nextState}"]`
+            );
+
+            currentNode.addClass("highlighted");
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if (controller.signal.aborted) throw new Error("Animation aborted");
+
+            edge.addClass("highlighted");
+            currentNode.removeClass("highlighted");
+
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if (controller.signal.aborted) throw new Error("Animation aborted");
+            edge.removeClass("highlighted");
+          }
+
+          const finalNode = cyRef.current.$(
+            `#${pathToAnimate[pathToAnimate.length - 1]}`
+          );
+          finalNode.addClass("highlighted");
+
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          if (controller.signal.aborted) throw new Error("Animation aborted");
+          finalNode.removeClass("highlighted");
+
+          if (foundAcceptedPath) break;
+          }
+
         } else {
           pathToAnimate = paths;
   
@@ -374,29 +426,21 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
             if (controller.signal.aborted) throw new Error("Animation aborted");
           
             const [currentState, input, nextStates] = pathToAnimate[i];
-          
             const currentNode = cyRef.current.$(`#${currentState}`);
             
-            if (pathToAnimate.length === 1) {
-              
-              currentNode.addClass("highlighted");
-          
-              await new Promise((resolve) => setTimeout(resolve, 800)); 
-          
-              currentNode.removeClass("highlighted");
-            } else {
-              const edge = cyRef.current.edges(
-                `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
-              );
-          
-              currentNode.addClass("highlighted");
-          
-              await new Promise((resolve) => setTimeout(resolve, 600));
-          
-              currentNode.removeClass("highlighted");
-              edge.addClass("highlighted");
-          
-              await new Promise((resolve) => setTimeout(resolve, 600));
+            const edge = cyRef.current.edges(
+              `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
+            );
+            currentNode.addClass("highlighted");
+        
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if (controller.signal.aborted) throw new Error("Animation aborted");
+        
+            currentNode.removeClass("highlighted");
+            edge.addClass("highlighted");
+        
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if (controller.signal.aborted) throw new Error("Animation aborted");
               edge.removeClass("highlighted");
             }
           }
@@ -407,10 +451,10 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
           finalNode.addClass("highlighted");
   
           await new Promise((resolve) => setTimeout(resolve, 500));
+          if (controller.signal.aborted) throw new Error("Animation aborted");
   
           finalNode.removeClass("highlighted");
-        }
-  
+
       } catch (error) {
         if (error.message !== "Animation aborted") {
           console.error(error);
@@ -426,7 +470,7 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
     if (isAnimating) {
       animatePath();
     }
-  }, [triggerAnimation, method]);
+  }, [triggerAnimation]);
   
   return (
     <div className={styles.automatacontainer}>
