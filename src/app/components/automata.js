@@ -8,7 +8,7 @@ import { handleAutomatonEvaluate } from "@/dataRetriever/data";
 cytoscape.use(dagre);
 
 const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
-
+  
   const cyContainer = useRef(null);
   const cyRef = useRef(null); 
   const [stringToEvaluate, setStringToEvaluate] = useState("");
@@ -18,7 +18,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
   const [accepted, setAccepted] = useState(null); // Accepted status of the string
   const [paths, setPaths] = useState([]);
   const [abortController, setAbortController] = useState(null); 
-  const [error, setError] = useState("");
 
   const handleStringInputChange = (event) => {
     setStringToEvaluate(event.target.value);
@@ -37,11 +36,23 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
   };
 
   const evaluate = async () => {
+
     const method_to_use = method === "thompson" ? "thompson" : 
                       method === "subconjuntos" ? "subset" : 
                       "optimize";
 
-    const evaluationResult = await handleAutomatonEvaluate(method_to_use, stringToEvaluate);
+    const sanitizeString = (input) => {
+
+      let cleanedString = input.replace(/&/g, "");
+  
+      cleanedString = cleanedString.replace(/&{2,}/g, '&');
+  
+      return cleanedString || "&";
+    };
+
+    const sanitizedString = sanitizeString(stringToEvaluate);
+    
+    const evaluationResult = await handleAutomatonEvaluate(method_to_use, sanitizedString);
 
     if (!evaluationResult) {
         return {
@@ -64,19 +75,11 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
         status: string_status,
         paths: paths,
     };
-};
+  };
 
-  
   const handleSubmit = async (event) => {
 
     event.preventDefault();
-
-    if (!stringToEvaluate) {
-      setError("La cadena a evaluar no puede estar vacía.");
-      return;
-    } else {
-        setError("");
-    }
 
     const { status, paths } = await evaluate();
 
@@ -97,7 +100,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
       setIsDisabled(true);
       setIsAnimating(false);
       setStringToEvaluate("");
-      setError("");
       return
     };
 
@@ -155,7 +157,7 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
       });
     
     } else {
-
+      
       // nfatable validation format for subset and optimize
       const isInvalidFormat = (table) => {
           if (typeof table === 'object' && table !== null) {
@@ -171,41 +173,50 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
           return;  
       }
 
-      nfaTable.forEach(transitionStr => {
-        const match = transitionStr.match(/(\w+):\(\s*(.*?)\s*,\s*(\w+)\s*\)/);
+      // Nueva condición para dibujar solo el nodo de inicio
+      if (nfaTable.length === 0) {
+        const startState = initial_state[0];
+        elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
+        elements.push({
+            data: { source: "start", target: startState, label: "" }, // Cambié 'startState' a startState
+        });
+        elements.push({ data: { id: startState, label: startState }, classes: accept_states.includes(startState) ? "final" : "" });
+      } else {
 
-        if (match) {
-            const state = match[1];      // The state (e.g., "A")
-            const transition = match[2];  // The transition symbol (e.g., "a")
-            const target = match[3];      // The target state (e.g., "B")
-    
-            if (initial_state.includes(state) && firstState === null) {
-                firstState = state;
-                elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
-                elements.push({
-                    data: { source: "start", target: state, label: "" },
-                });
-            }
-    
-            if (!visitedNodes.has(state)) {
-                const classes = accept_states.includes(state) ? "final" : "";  
-                elements.push({ data: { id: state, label: state }, classes }); 
-                visitedNodes.add(state);
-            }
-    
-            elements.push({
-                data: { source: state, target: target, label: transition },
-            });
-    
-            if (!visitedNodes.has(target)) {
-                const classes = accept_states.includes(target) ? "final" : "";  
-                elements.push({ data: { id: target, label: target }, classes });  
-                visitedNodes.add(target);
-            }
-        }
-    });
-    
+        nfaTable.forEach(transitionStr => {
+          const match = transitionStr.match(/(\w+):\(\s*(.*?)\s*,\s*(\w+)\s*\)/);
+
+          if (match) {
+              const state = match[1];      // The state (e.g., "A")
+              const transition = match[2];  // The transition symbol (e.g., "a")
+              const target = match[3];      // The target state (e.g., "B")
       
+              if (initial_state.includes(state) && firstState === null) {
+                  firstState = state;
+                  elements.push({ data: { id: "start", label: "Start" }, classes: "start" });
+                  elements.push({
+                      data: { source: "start", target: state, label: "" },
+                  });
+              }
+      
+              if (!visitedNodes.has(state)) {
+                  const classes = accept_states.includes(state) ? "final" : "";  
+                  elements.push({ data: { id: state, label: state }, classes }); 
+                  visitedNodes.add(state);
+              }
+      
+              elements.push({
+                  data: { source: state, target: target, label: transition },
+              });
+      
+              if (!visitedNodes.has(target)) {
+                  const classes = accept_states.includes(target) ? "final" : "";  
+                  elements.push({ data: { id: target, label: target }, classes });  
+                  visitedNodes.add(target);
+              }
+          }
+        });
+      } 
     }
 
     const cy = cytoscape({
@@ -421,39 +432,50 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
 
         } else {
           pathToAnimate = paths;
-  
-          for (let i = 0; i < pathToAnimate.length; i++) {
-            if (controller.signal.aborted) throw new Error("Animation aborted");
-          
-            const [currentState, input, nextStates] = pathToAnimate[i];
+
+          const [currentState, input, nextStates] = pathToAnimate[0];
+
+          if(!nextStates || !input){
             const currentNode = cyRef.current.$(`#${currentState}`);
-            
-            const edge = cyRef.current.edges(
-              `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
-            );
             currentNode.addClass("highlighted");
-        
             await new Promise((resolve) => setTimeout(resolve, 600));
             if (controller.signal.aborted) throw new Error("Animation aborted");
-        
             currentNode.removeClass("highlighted");
-            edge.addClass("highlighted");
-        
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            if (controller.signal.aborted) throw new Error("Animation aborted");
-              edge.removeClass("highlighted");
-            }
+          }else{
+
+            for (let i = 0; i < pathToAnimate.length; i++) {
+              if (controller.signal.aborted) throw new Error("Animation aborted");
+            
+              const [currentState, input, nextStates] = pathToAnimate[i];
+              const currentNode = cyRef.current.$(`#${currentState}`);
+              const edge = cyRef.current.edges(
+                `[source = "${currentState}"][target = "${nextStates[0]}"][label = "${input}"]`
+              );
+              currentNode.addClass("highlighted");
+          
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              if (controller.signal.aborted) throw new Error("Animation aborted");
+          
+              currentNode.removeClass("highlighted");
+              edge.addClass("highlighted");
+          
+              await new Promise((resolve) => setTimeout(resolve, 600));
+              if (controller.signal.aborted) throw new Error("Animation aborted");
+                edge.removeClass("highlighted");
+              }
+  
+              const finalNode = cyRef.current.$(
+                `#${pathToAnimate[pathToAnimate.length - 1][2][0]}`
+              );
+              finalNode.addClass("highlighted");
+      
+              await new Promise((resolve) => setTimeout(resolve, 500));
+              if (controller.signal.aborted) throw new Error("Animation aborted");
+      
+              finalNode.removeClass("highlighted");
+
           }
-  
-          const finalNode = cyRef.current.$(
-            `#${pathToAnimate[pathToAnimate.length - 1][2][0]}`
-          );
-          finalNode.addClass("highlighted");
-  
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          if (controller.signal.aborted) throw new Error("Animation aborted");
-  
-          finalNode.removeClass("highlighted");
+        }
 
       } catch (error) {
         if (error.message !== "Animation aborted") {
@@ -495,7 +517,6 @@ const Automata = ({ nfaTable, method, initial_state, accept_states }) => {
             disabled={isDisabled} 
           />
         </div>
-        {error && <div className={styles2.error}>{error}</div>}
 
         <div className={styles.acceptance}
             style={{

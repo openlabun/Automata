@@ -100,13 +100,13 @@ const Optimize = ({ TranD, States, InitialState, AcceptState }) => {
 
             {/* Equivalent States Table */}
             <div className={styles.statesTable}>
-                <h2>Estados Equivalentes</h2>
+                <h2>Estados Significativos</h2>
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>
                         <thead>
                             <tr>
                                 <th>Estado</th>
-                                <th>Estados Equivalentes</th>
+                                <th>Estados Significativos</th>
                             </tr>
                         </thead>
                         <tbody>
