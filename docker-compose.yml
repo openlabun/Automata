@@ -3,8 +3,8 @@ version: '3.8'
 services:
   automataweb:
     build: .
-    image: automata-app
-    container_name: automataweb
+    image: automata-image
+    container_name: automata
     ports:
       - "5028:3000"
     restart: unless-stopped
